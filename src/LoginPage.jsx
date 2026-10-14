@@ -188,11 +188,11 @@ export function LoginPage({ onLoginSuccess }) {
         </div>
 
         {/* Center: Project Description & Scope */}
-        <div className="relative z-10 my-10 space-y-4">
+        <div className="relative z-10 my-auto py-12 flex flex-col items-center text-center space-y-4">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
             Stormwater GIS &amp; Hydrology Tracking
           </h1>
-          <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-lg">
+          <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-lg mx-auto">
             Centralized spatial data infrastructure monitoring campus runoff, 
             catchment drainage, and retention capacity in compliance with UMBC’s 
             NPDES MS4 watershed permit.
