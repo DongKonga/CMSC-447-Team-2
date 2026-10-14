@@ -185,13 +185,6 @@ export function LoginPage({ onLoginSuccess }) {
               </p>
             </div>
           </div>
-
-          <div className="mt-8">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/80 text-xs font-medium text-slate-300 backdrop-blur-sm">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              All Telemetry Systems Operational
-            </span>
-          </div>
         </div>
 
         {/* Center: Project Description & Scope */}
