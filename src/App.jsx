@@ -100,24 +100,40 @@ export function App(): React.JSX.Element {
         {/* Authenticated User Badge & Logout Button */}
         <div
           slot="navigation-actions"
-          className="flex items-center gap-3 px-3 py-1 text-xs"
           style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.25rem 0.75rem" }}
         >
           <div
-            className="flex items-center gap-2 bg-[#201f1f] px-2.5 py-1 rounded border border-[#4f4632]"
-            style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              backgroundColor: "#1a1a1a",
+              padding: "0.25rem 0.6rem",
+              borderRadius: "0.5rem",
+              border: "1px solid #333333",
+              fontSize: "0.75rem",
+            }}
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span className="text-[#ffe5b1] font-semibold">{currentUser.username}</span>
-            <span className="text-[#c3c6d1] text-[10px]">[{currentUser.role}]</span>
+            <span style={{ width: "6px", height: "6px", borderRadius: "9999px", backgroundColor: "#22c55e" }}></span>
+            <span style={{ color: "#ffc20e", fontWeight: "600" }}>{currentUser.username}</span>
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1 px-2.5 py-1 bg-[#131313] hover:bg-[#690005] hover:text-[#ffdad6] text-[#e5e2e1] rounded border border-[#4f4632] transition-colors cursor-pointer text-xs uppercase"
-            style={{ display: "flex", alignItems: "center", gap: "0.25rem", cursor: "pointer" }}
-            title="Sign out of ArcGIS Enterprise session"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.35rem",
+              padding: "0.25rem 0.6rem",
+              backgroundColor: "#262626",
+              color: "#e5e5e5",
+              borderRadius: "0.5rem",
+              border: "1px solid #404040",
+              fontSize: "0.75rem",
+              cursor: "pointer",
+            }}
+            title="Sign out of UMBC Stormwater session"
           >
-            <span className="material-symbols-outlined text-sm">logout</span>
+            <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>logout</span>
             <span>Sign Out</span>
           </button>
         </div>
