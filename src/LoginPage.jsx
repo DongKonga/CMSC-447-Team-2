@@ -188,47 +188,15 @@ export function LoginPage({ onLoginSuccess }) {
         </div>
 
         {/* Center: Project Description & Scope */}
-        <div className="relative z-10 my-10 space-y-5">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
-              Stormwater GIS &amp; Hydrology Tracking
-            </h1>
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed mt-2.5 max-w-lg">
-              Centralized spatial data infrastructure monitoring campus runoff, 
-              catchment drainage, and retention capacity in compliance with UMBC’s 
-              NPDES MS4 watershed permit.
-            </p>
-          </div>
-
-          {/* Clean Core Indicators */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-            <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 backdrop-blur-sm">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
-                Watershed Stations
-              </span>
-              <span className="text-base font-bold text-white mt-0.5 block">
-                14 Online
-              </span>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 backdrop-blur-sm">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
-                MS4 Catchments
-              </span>
-              <span className="text-base font-bold text-[#ffc20e] mt-0.5 block">
-                Permit Verified
-              </span>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 backdrop-blur-sm">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
-                Telemetry Link
-              </span>
-              <span className="text-base font-bold text-emerald-400 mt-0.5 block">
-                Live Sync
-              </span>
-            </div>
-          </div>
+        <div className="relative z-10 my-10 space-y-4">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+            Stormwater GIS &amp; Hydrology Tracking
+          </h1>
+          <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-lg">
+            Centralized spatial data infrastructure monitoring campus runoff, 
+            catchment drainage, and retention capacity in compliance with UMBC’s 
+            NPDES MS4 watershed permit.
+          </p>
         </div>
 
         {/* Bottom Lockup: Lab & Department Footnote */}
@@ -485,7 +453,7 @@ export function LoginPage({ onLoginSuccess }) {
               ) : (
                 <>
                   <p>
-                    For access authorization to the UMBC Stormwater GIS Portal or hardware telemetry issues:
+                    For access authorization to the UMBC Stormwater GIS Portal or technical assistance:
                   </p>
                   <div className="p-3 bg-slate-950/80 rounded-lg border border-slate-800 text-xs text-slate-300 space-y-1">
                     <p><strong className="text-white">DoIT Technology Help Desk:</strong></p>
