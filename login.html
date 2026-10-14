@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>UMBC Stormwater Portal // Sign In</title>
+  <title>UMBC Facilities Management // Stormwater GIS Portal</title>
   <!-- Material Symbols Outlined -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -23,101 +23,199 @@
           colors: {
             umbc: {
               gold: '#ffc20e',
-              dark: '#121212',
-              card: '#1a1a1a',
+              slate: '#0f172a',
+              dark: '#0b0f19',
             }
           }
         }
       }
     }
   </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+  </style>
 </head>
-<body class="min-h-screen bg-[#121212] text-neutral-100 font-sans flex flex-col justify-between selection:bg-[#ffc20e] selection:text-black">
+<body class="min-h-screen w-full flex flex-col lg:flex-row bg-[#0b0f19] text-slate-100 font-sans selection:bg-[#ffc20e] selection:text-black">
 
-  <!-- TOP BAR -->
-  <header class="w-full px-6 py-5 flex items-center justify-between border-b border-neutral-800/80">
-    <div class="flex items-center gap-2.5">
-      <span class="text-2xl font-black tracking-tight text-[#ffc20e]">UMBC</span>
-      <span class="h-4 w-px bg-neutral-700"></span>
-      <span class="text-sm font-medium text-neutral-300">Stormwater Portal</span>
+  <!-- ======================================================== -->
+  <!-- LEFT COLUMN: DARK SLATE PANEL WITH TOPOGRAPHIC OVERLAY   -->
+  <!-- ======================================================== -->
+  <section class="lg:w-[48%] xl:w-[45%] bg-[#0f172a] border-b lg:border-b-0 lg:border-r border-slate-800 p-8 sm:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden">
+    
+    <!-- Subtle Topographic Contour Overlay -->
+    <div class="absolute inset-0 pointer-events-none opacity-25">
+      <svg class="w-full h-full object-cover" viewBox="0 0 600 900" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <path d="M-40 80C140 40 280 140 640 90" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 2"/>
+        <path d="M-40 160C160 110 320 220 640 170" stroke="#cbd5e1" stroke-width="1.2"/>
+        <path d="M-40 250C190 190 350 310 640 260" stroke="#ffc20e" stroke-width="1.4"/>
+        <path d="M-40 340C220 280 380 400 640 350" stroke="#94a3b8" stroke-width="1.2"/>
+        <path d="M-40 440C180 380 340 510 640 460" stroke="#cbd5e1" stroke-width="1.2"/>
+        <path d="M-40 550C240 480 410 620 640 570" stroke="#ffc20e" stroke-width="1.4"/>
+        <path d="M-40 660C190 600 370 730 640 680" stroke="#94a3b8" stroke-width="1.2"/>
+        <path d="M-40 780C260 710 440 840 640 800" stroke="#cbd5e1" stroke-width="1.2"/>
+        
+        <!-- Closed Watershed Basin Summit Contours -->
+        <path d="M160 420C220 370 320 390 360 460C400 530 340 610 260 600C180 590 110 490 160 420Z" stroke="#64748b" stroke-width="1.2"/>
+        <path d="M200 450C240 415 300 430 330 475C360 520 315 575 260 565C205 555 165 495 200 450Z" stroke="#ffc20e" stroke-width="1.2" opacity="0.8"/>
+        <path d="M235 475C260 450 295 460 310 490C325 520 295 550 265 545C235 540 215 505 235 475Z" stroke="#ffc20e" stroke-width="1.5"/>
+      </svg>
     </div>
-    <a href="https://doit.umbc.edu" target="_blank" rel="noreferrer" class="text-xs text-neutral-400 hover:text-[#ffc20e] transition-colors">
-      DoIT Support
-    </a>
-  </header>
 
-  <!-- CENTERED LOGIN CARD -->
-  <main class="flex-1 flex items-center justify-center p-4 sm:p-6">
-    <div class="w-full max-w-md bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-8 sm:p-10 shadow-xl relative">
-      
-      <!-- UMBC LOGO BADGE -->
-      <div class="flex flex-col items-center text-center mb-8">
-        <div class="w-16 h-16 rounded-2xl bg-neutral-900 border-2 border-[#ffc20e] flex items-center justify-center shadow-lg shadow-black/40 mb-4">
-          <span class="text-2xl font-black text-[#ffc20e] tracking-tight">U</span>
+    <!-- Top: UMBC Facilities Lockup -->
+    <div class="relative z-10">
+      <div class="flex items-center gap-3.5 mb-3">
+        <div class="flex items-center justify-center w-11 h-11 rounded-lg bg-black/60 border border-[#ffc20e]/60 shadow-md">
+          <span class="text-xl font-black text-[#ffc20e] tracking-tight">U</span>
         </div>
-        <h1 class="text-2xl font-bold text-white tracking-tight">
-          Sign in to UMBC Stormwater
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xl font-black tracking-tight text-[#ffc20e]">UMBC</span>
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-300">Facilities Management</span>
+          </div>
+          <p class="text-[11px] text-slate-400 tracking-wide">Division of Information Technology &amp; Facilities Management</p>
+        </div>
+      </div>
+
+      <div class="mt-8">
+        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/80 text-xs font-medium text-slate-300 backdrop-blur-sm">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          All Telemetry Systems Operational
+        </span>
+      </div>
+    </div>
+
+    <!-- Center: Project Description & Scope -->
+    <div class="relative z-10 my-10 space-y-5">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+          Stormwater GIS &amp; Hydrology Tracking
         </h1>
-        <p class="text-neutral-400 text-sm mt-1.5">
-          Enter your campus credentials to access GIS &amp; telemetry data
+        <p class="text-sm sm:text-base text-slate-300 leading-relaxed mt-2.5 max-w-lg">
+          Centralized spatial data infrastructure monitoring campus runoff, 
+          catchment drainage, and retention capacity in compliance with UMBC’s 
+          NPDES MS4 watershed permit.
         </p>
       </div>
 
-      <!-- ERROR ALERT (Hidden by default) -->
-      <div id="error-alert" class="hidden mb-6 p-3.5 rounded-lg bg-red-950/40 border border-red-800/60 flex items-start gap-3 text-red-200 text-sm">
-        <span class="material-symbols-outlined text-lg text-red-400 shrink-0 mt-0.5">error</span>
-        <div id="error-message" class="flex-1">Please enter your credentials.</div>
-        <button id="error-close" type="button" class="text-red-400 hover:text-red-200 font-bold ml-1 text-sm">✕</button>
+      <!-- Core Telemetry Badges -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+        <div class="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 backdrop-blur-sm">
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Watershed Stations</span>
+          <span class="text-base font-bold text-white mt-0.5 block">14 Online</span>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 backdrop-blur-sm">
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">MS4 Catchments</span>
+          <span class="text-base font-bold text-[#ffc20e] mt-0.5 block">Permit Verified</span>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 backdrop-blur-sm">
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Telemetry Link</span>
+          <span class="text-base font-bold text-emerald-400 mt-0.5 block">Live Sync</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Lockup -->
+    <div class="relative z-10 pt-6 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+      <span>Hydrology GIS Lab • TRC Bldg 204</span>
+      <span class="text-[#ffc20e] font-medium">Internal Utility</span>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- RIGHT COLUMN: ACCESSIBLE AUTHENTICATION FORM            -->
+  <!-- ======================================================== -->
+  <section class="lg:w-[52%] xl:w-[55%] bg-[#0b0f19] p-8 sm:p-12 lg:p-16 flex items-center justify-center">
+    <div class="w-full max-w-md space-y-7">
+      
+      <!-- Form Header -->
+      <div>
+        <h2 class="text-2xl font-bold text-white tracking-tight">Portal Authentication</h2>
+        <p class="text-sm text-slate-400 mt-1.5">
+          Sign in using your institutional myUMBC login or GIS operator credentials.
+        </p>
       </div>
 
-      <!-- FORM -->
-      <form id="login-form" class="space-y-5" novalidate>
-        <!-- Username Input -->
+      <!-- Error Alert -->
+      <div id="error-alert" class="hidden p-3.5 rounded-xl bg-red-950/40 border border-red-800/60 flex items-start gap-3 text-red-200 text-sm">
+        <span class="material-symbols-outlined text-lg text-red-400 shrink-0 mt-0.5">error</span>
+        <div id="error-message" class="flex-1 text-xs sm:text-sm">Please verify your credentials.</div>
+        <button id="error-close" type="button" class="text-red-400 hover:text-red-200 text-xs font-bold cursor-pointer">✕</button>
+      </div>
+
+      <!-- PRIMARY ACTION: LOG IN VIA myUMBC -->
+      <div>
+        <button 
+          id="btn-myumbc" 
+          type="button" 
+          class="w-full bg-[#ffc20e] hover:bg-[#e6ad0b] active:bg-[#cca00a] text-black font-bold py-3.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2.5 transition-all shadow-md hover:shadow-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#ffc20e] focus:ring-offset-2 focus:ring-offset-[#0b0f19]"
+        >
+          <span id="sso-icon" class="material-symbols-outlined text-lg">verified_user</span>
+          <span id="sso-text">Log in via myUMBC</span>
+        </button>
+        <p class="text-[11px] text-center text-slate-500 mt-2">
+          University Single Sign-On (Shibboleth &amp; Duo Multi-Factor Authentication)
+        </p>
+      </div>
+
+      <!-- CLEAN DIVIDER -->
+      <div class="relative flex items-center justify-center">
+        <div class="border-t border-slate-800 w-full"></div>
+        <span class="bg-[#0b0f19] px-3 text-xs text-slate-400 uppercase tracking-wider font-medium">
+          or operator access
+        </span>
+      </div>
+
+      <!-- SECONDARY FORM: OPERATOR CREDENTIALS -->
+      <form id="operator-form" class="space-y-4" novalidate>
+        <!-- Operator Username / Campus ID -->
         <div>
-          <label for="username" class="block text-sm font-medium text-neutral-300 mb-1.5">
-            UMBC Email or Username
+          <label for="operator-username" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+            Operator Username or Campus ID
           </label>
           <div class="relative">
-            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 text-lg pointer-events-none">person</span>
+            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-lg pointer-events-none">badge</span>
             <input 
-              id="username" 
-              name="username"
+              id="operator-username" 
               type="text" 
               value="gis_operator@umbc.edu" 
-              placeholder="yourusername@umbc.edu"
+              placeholder="operator@umbc.edu"
               required 
               autocomplete="username"
-              class="w-full bg-[#121212] border border-neutral-700 text-white pl-10 pr-4 py-2.5 rounded-xl text-sm placeholder:text-neutral-500 focus:outline-none focus:border-[#ffc20e] focus:ring-1 focus:ring-[#ffc20e] transition-colors"
+              class="w-full bg-slate-900/90 border border-slate-700 text-white pl-10 pr-4 py-2.5 rounded-xl text-sm placeholder:text-slate-500 focus:outline-none focus:border-[#ffc20e] focus:ring-1 focus:ring-[#ffc20e] transition-colors"
             />
           </div>
         </div>
 
-        <!-- Password Input -->
+        <!-- Operator Password -->
         <div>
           <div class="flex justify-between items-center mb-1.5">
-            <label for="password" class="block text-sm font-medium text-neutral-300">
-              Password
+            <label for="operator-password" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Password or Access Key
             </label>
-            <button type="button" id="forgot-btn" class="text-xs text-[#ffc20e] hover:underline cursor-pointer">
+            <button type="button" id="btn-forgot" class="text-xs text-[#ffc20e] hover:underline cursor-pointer">
               Forgot password?
             </button>
           </div>
           <div class="relative">
-            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 text-lg pointer-events-none">lock</span>
+            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-lg pointer-events-none">lock</span>
             <input 
-              id="password" 
-              name="password"
+              id="operator-password" 
               type="password" 
               value="••••••••••••" 
               required 
               autocomplete="current-password"
-              class="w-full bg-[#121212] border border-neutral-700 text-white pl-10 pr-11 py-2.5 rounded-xl text-sm placeholder:text-neutral-500 focus:outline-none focus:border-[#ffc20e] focus:ring-1 focus:ring-[#ffc20e] transition-colors"
+              class="w-full bg-slate-900/90 border border-slate-700 text-white pl-10 pr-11 py-2.5 rounded-xl text-sm placeholder:text-slate-500 focus:outline-none focus:border-[#ffc20e] focus:ring-1 focus:ring-[#ffc20e] transition-colors"
             />
             <button 
               type="button" 
               id="toggle-password" 
               aria-label="Toggle password visibility" 
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300 p-1 cursor-pointer"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1 cursor-pointer"
             >
               <span id="eye-icon" class="material-symbols-outlined text-lg">visibility</span>
             </button>
@@ -125,65 +223,53 @@
         </div>
 
         <!-- Remember Me Checkbox -->
-        <div class="flex items-center justify-between pt-1">
+        <div class="flex items-center justify-between pt-0.5">
           <label class="flex items-center gap-2 cursor-pointer select-none">
             <input 
               id="remember-me" 
               type="checkbox" 
               checked 
-              class="w-4 h-4 rounded bg-[#121212] border-neutral-700 text-[#ffc20e] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#ffc20e]"
+              class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-[#ffc20e] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#ffc20e]"
             />
-            <span class="text-sm text-neutral-300">Remember me</span>
+            <span class="text-xs text-slate-300">Remember this device for 14 days</span>
           </label>
-          <span class="text-xs text-neutral-500">UMBC SSO</span>
         </div>
 
-        <!-- Submit Button -->
+        <!-- Secondary Submit Button -->
         <button 
-          id="submit-btn" 
+          id="btn-operator-submit" 
           type="submit" 
-          class="w-full bg-[#ffc20e] hover:bg-[#e6ad0b] active:bg-[#cca00a] text-black font-semibold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed mt-2 cursor-pointer"
+          class="w-full bg-slate-800 hover:bg-slate-750 active:bg-slate-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm border border-slate-700 hover:border-[#ffc20e]/80 flex items-center justify-center gap-2 transition-all cursor-pointer mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <span id="btn-text">Sign In</span>
-          <span id="btn-icon" class="material-symbols-outlined text-lg">arrow_forward</span>
+          <span id="op-btn-text">Sign In with Operator Key</span>
+          <span id="op-btn-icon" class="material-symbols-outlined text-base">arrow_forward</span>
         </button>
       </form>
 
-      <!-- SUPPORT FOOTER -->
-      <div class="mt-8 pt-6 border-t border-neutral-800 text-center">
-        <p class="text-xs text-neutral-400">
-          Need access or technical support? 
-          <button id="help-btn" type="button" class="text-[#ffc20e] hover:underline font-medium cursor-pointer">
+      <!-- FOOTER ASSISTANCE -->
+      <div class="pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+        <span>
+          Need GIS authorization? 
+          <button id="btn-help" type="button" class="text-[#ffc20e] hover:underline font-medium cursor-pointer">
             Contact DoIT
           </button>
-        </p>
+        </span>
+        <span class="text-slate-500">Facilities Help Desk: (410) 455-3838</span>
       </div>
 
     </div>
-  </main>
+  </section>
 
-  <!-- MINIMAL FOOTER -->
-  <footer class="w-full px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-neutral-500 border-t border-neutral-800/80">
-    <p>© 2025 University of Maryland, Baltimore County</p>
-    <div class="flex items-center gap-4">
-      <a href="https://umbc.edu" target="_blank" rel="noreferrer" class="hover:text-neutral-400 transition-colors">UMBC Home</a>
-      <span>•</span>
-      <a href="https://doit.umbc.edu" target="_blank" rel="noreferrer" class="hover:text-neutral-400 transition-colors">DoIT Help Desk</a>
-    </div>
-  </footer>
-
-  <!-- SIMPLE MODAL -->
-  <div id="simple-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-[#1a1a1a] border border-neutral-800 rounded-xl max-w-sm w-full p-6 shadow-2xl relative text-left">
+  <!-- MODAL DIALOG -->
+  <div id="modal-dialog" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl relative text-left">
       <div class="flex justify-between items-center mb-3">
-        <h3 id="modal-title" class="text-base font-bold text-white">Reset Password</h3>
-        <button id="modal-close" class="text-neutral-400 hover:text-white text-lg cursor-pointer">✕</button>
+        <h3 id="modal-title" class="text-base font-bold text-white">Reset UMBC Password</h3>
+        <button id="modal-close" class="text-slate-400 hover:text-white text-lg cursor-pointer">✕</button>
       </div>
-      <div id="modal-content" class="text-sm text-neutral-300 space-y-2.5">
-        <!-- Content inserted dynamically -->
-      </div>
+      <div id="modal-body" class="text-sm text-slate-300 space-y-2.5"></div>
       <div class="mt-5 flex justify-end">
-        <button id="modal-ok" class="px-4 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-white rounded-lg text-xs font-medium cursor-pointer">
+        <button id="modal-ok" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium cursor-pointer">
           Close
         </button>
       </div>
@@ -195,30 +281,35 @@
       const STORAGE_KEY = "umbc_hydro_gis_session";
       const WORKSTATION_KEY = "umbc_hydro_gis_saved_workstation";
 
-      const form = document.getElementById("login-form");
-      const usernameInput = document.getElementById("username");
-      const passwordInput = document.getElementById("password");
+      const btnMyUmbc = document.getElementById("btn-myumbc");
+      const ssoIcon = document.getElementById("sso-icon");
+      const ssoText = document.getElementById("sso-text");
+
+      const operatorForm = document.getElementById("operator-form");
+      const usernameInput = document.getElementById("operator-username");
+      const passwordInput = document.getElementById("operator-password");
       const toggleBtn = document.getElementById("toggle-password");
       const eyeIcon = document.getElementById("eye-icon");
       const rememberCheckbox = document.getElementById("remember-me");
-      const submitBtn = document.getElementById("submit-btn");
-      const btnText = document.getElementById("btn-text");
-      const btnIcon = document.getElementById("btn-icon");
+      const operatorSubmitBtn = document.getElementById("btn-operator-submit");
+      const opBtnText = document.getElementById("op-btn-text");
+      const opBtnIcon = document.getElementById("op-btn-icon");
+
       const errorAlert = document.getElementById("error-alert");
       const errorMessage = document.getElementById("error-message");
       const errorClose = document.getElementById("error-close");
 
-      const modal = document.getElementById("simple-modal");
+      const modal = document.getElementById("modal-dialog");
       const modalTitle = document.getElementById("modal-title");
-      const modalContent = document.getElementById("modal-content");
+      const modalBody = document.getElementById("modal-body");
       const modalClose = document.getElementById("modal-close");
       const modalOk = document.getElementById("modal-ok");
-      const forgotBtn = document.getElementById("forgot-btn");
-      const helpBtn = document.getElementById("help-btn");
+      const btnForgot = document.getElementById("btn-forgot");
+      const btnHelp = document.getElementById("btn-help");
 
       let isMasked = true;
 
-      // Restore remembered username
+      // Restore saved username
       try {
         const saved = localStorage.getItem(WORKSTATION_KEY);
         if (saved) {
@@ -240,14 +331,14 @@
         isMasked = false;
       });
 
-      // Toggle password visibility
+      // Toggle password
       toggleBtn.addEventListener("click", function() {
         const isPassword = passwordInput.getAttribute("type") === "password";
         passwordInput.setAttribute("type", isPassword ? "text" : "password");
         eyeIcon.textContent = isPassword ? "visibility_off" : "visibility";
       });
 
-      // Error banner
+      // Error handler
       function showError(msg) {
         errorMessage.textContent = msg;
         errorAlert.classList.remove("hidden");
@@ -256,8 +347,60 @@
         errorAlert.classList.add("hidden");
       });
 
-      // Form submit
-      form.addEventListener("submit", async function(e) {
+      // Handle login success session storage
+      function completeLogin(username, role) {
+        const remember = rememberCheckbox.checked;
+        const expiresAt = new Date(Date.now() + (remember ? 14 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000)).toISOString();
+        const user = {
+          username: username,
+          displayName: username.split("@")[0].toUpperCase(),
+          role: role || "MS4 GIS Operator",
+          lab: "BLDG TRC 204 // Hydrology GIS Lab",
+          portal: "umbc.maps.arcgis.com",
+          authenticatedAt: new Date().toISOString(),
+          expiresAt: expiresAt,
+        };
+
+        const serialized = JSON.stringify(user);
+        sessionStorage.setItem(STORAGE_KEY, serialized);
+
+        if (remember) {
+          localStorage.setItem(STORAGE_KEY, serialized);
+          localStorage.setItem(WORKSTATION_KEY, JSON.stringify({
+            username: username,
+            expiresAt: expiresAt
+          }));
+        }
+
+        if (window.location.pathname.endsWith("login.html")) {
+          window.location.href = "index.html";
+        } else {
+          window.location.reload();
+        }
+      }
+
+      // PRIMARY ACTION: Log in via myUMBC
+      btnMyUmbc.addEventListener("click", async function() {
+        errorAlert.classList.add("hidden");
+        btnMyUmbc.disabled = true;
+        ssoIcon.textContent = "progress_activity";
+        ssoIcon.classList.add("animate-spin");
+        ssoText.textContent = "Connecting to myUMBC...";
+
+        try {
+          await new Promise(r => setTimeout(r, 650));
+          completeLogin("myumbc_user@umbc.edu", "myUMBC SSO Authorized User");
+        } catch (e) {
+          showError("Failed to authenticate via myUMBC.");
+          btnMyUmbc.disabled = false;
+          ssoIcon.textContent = "verified_user";
+          ssoIcon.classList.remove("animate-spin");
+          ssoText.textContent = "Log in via myUMBC";
+        }
+      });
+
+      // SECONDARY ACTION: Operator Credentials Form
+      operatorForm.addEventListener("submit", async function(e) {
         e.preventDefault();
         errorAlert.classList.add("hidden");
 
@@ -265,88 +408,64 @@
         const password = passwordInput.value;
 
         if (!username) {
-          showError("Please enter your UMBC email or username.");
+          showError("Please enter your operator username or campus ID.");
           usernameInput.focus();
           return;
         }
         if (!password) {
-          showError("Please enter your password.");
+          showError("Please enter your password or access key.");
           passwordInput.focus();
           return;
         }
 
-        submitBtn.disabled = true;
-        btnText.textContent = "Signing in...";
-        btnIcon.textContent = "progress_activity";
-        btnIcon.classList.add("animate-spin");
+        operatorSubmitBtn.disabled = true;
+        opBtnText.textContent = "Verifying Credentials...";
+        opBtnIcon.textContent = "progress_activity";
+        opBtnIcon.classList.add("animate-spin");
 
         try {
           await new Promise(r => setTimeout(r, 600));
-
-          const remember = rememberCheckbox.checked;
-          const expiresAt = new Date(Date.now() + (remember ? 14 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000)).toISOString();
-
-          const user = {
-            username: username,
-            displayName: username.split("@")[0].toUpperCase(),
-            role: "MS4 GIS Operator",
-            portal: "umbc.maps.arcgis.com",
-            authenticatedAt: new Date().toISOString(),
-            expiresAt: expiresAt,
-          };
-
-          const serialized = JSON.stringify(user);
-          sessionStorage.setItem(STORAGE_KEY, serialized);
-
-          if (remember) {
-            localStorage.setItem(STORAGE_KEY, serialized);
-            localStorage.setItem(WORKSTATION_KEY, JSON.stringify({
-              username: username,
-              expiresAt: expiresAt
-            }));
-          }
-
-          if (window.location.pathname.endsWith("login.html")) {
-            window.location.href = "index.html";
-          } else {
-            window.location.reload();
-          }
+          completeLogin(username, "MS4 GIS Spatial Operator");
         } catch (err) {
-          showError("Sign in failed. Please try again.");
-          submitBtn.disabled = false;
-          btnText.textContent = "Sign In";
-          btnIcon.textContent = "arrow_forward";
-          btnIcon.classList.remove("animate-spin");
+          showError("Invalid operator credentials. Please try again.");
+          operatorSubmitBtn.disabled = false;
+          opBtnText.textContent = "Sign In with Operator Key";
+          opBtnIcon.textContent = "arrow_forward";
+          opBtnIcon.classList.remove("animate-spin");
         }
       });
 
       // Modals
       function openModal(title, html) {
         modalTitle.textContent = title;
-        modalContent.innerHTML = html;
+        modalBody.innerHTML = html;
         modal.classList.remove("hidden");
       }
       function closeModal() {
         modal.classList.add("hidden");
       }
 
-      forgotBtn.addEventListener("click", function() {
-        openModal("Reset Password", `
-          <p>Please use your UMBC myUMBC account to reset your campus password:</p>
-          <a href="https://my.umbc.edu/account" target="_blank" class="inline-block text-[#ffc20e] hover:underline font-medium">
+      btnForgot.addEventListener("click", function() {
+        openModal("Reset UMBC Password", `
+          <p>Institutional myUMBC passwords can be reset directly through the central campus identity portal:</p>
+          <a href="https://my.umbc.edu/account" target="_blank" class="inline-flex items-center gap-1 text-[#ffc20e] hover:underline font-semibold">
             my.umbc.edu/account →
           </a>
+          <p class="text-xs text-slate-400 pt-1">
+            For standalone ArcGIS Enterprise keys, contact the GIS administrator at <span class="text-slate-200 font-mono">gis-support@umbc.edu</span>.
+          </p>
         `);
       });
 
-      helpBtn.addEventListener("click", function() {
-        openModal("DoIT Support", `
-          <p>For access requests to the Stormwater GIS Lab or login assistance:</p>
-          <p class="text-xs text-neutral-400">
-            • Phone: (410) 455-3838<br/>
-            • Email: doit@umbc.edu<br/>
-            • Location: Engineering TRC 204
-          </p>
+      btnHelp.addEventListener("click", function() {
+        openModal("GIS Lab Support", `
+          <p>For access authorization to the UMBC Stormwater GIS Portal or hardware telemetry issues:</p>
+          <div class="p-3 bg-slate-950/80 rounded-lg border border-slate-800 text-xs text-slate-300 space-y-1">
+            <p><strong class="text-white">DoIT Technology Help Desk:</strong></p>
+            <p>• Phone: (410) 455-3838</p>
+            <p>• Web: <a href="https://doit.umbc.edu" target="_blank" class="text-[#ffc20e] underline">doit.umbc.edu</a></p>
+            <p>• Facilities GIS Lab: TRC Bldg 204</p>
+          </div>
         `);
       });
 
