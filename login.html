@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>UMBC HYDRO-GIS // STORMWATER TELEMETRY PORTAL</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Space Grotesk & Geist -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration Verbatim -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "outline": "#9c8f78",
+            "inverse-surface": "#e5e2e1",
+            "secondary-container": "#454952",
+            "primary-fixed": "#ffdf9d",
+            "tertiary-fixed-dim": "#a4c9ff",
+            "surface-variant": "#353534",
+            "surface": "#131313",
+            "surface-container": "#201f1f",
+            "tertiary-fixed": "#d4e3ff",
+            "primary": "#ffe5b1",
+            "on-secondary-fixed-variant": "#43474f",
+            "on-primary-fixed-variant": "#5b4300",
+            "on-surface": "#e5e2e1",
+            "on-error": "#690005",
+            "on-secondary-fixed": "#181c23",
+            "inverse-primary": "#785a00",
+            "background": "#131313",
+            "on-primary": "#3f2e00",
+            "on-error-container": "#ffdad6",
+            "error-container": "#93000a",
+            "primary-container": "#ffc20e",
+            "secondary-fixed-dim": "#c3c6d1",
+            "on-surface-variant": "#d3c5ab",
+            "on-background": "#e5e2e1",
+            "on-tertiary-fixed": "#001c39",
+            "outline-variant": "#4f4632",
+            "surface-container-highest": "#353534",
+            "surface-container-low": "#1c1b1b",
+            "on-secondary-container": "#b5b8c2",
+            "error": "#ffb4ab",
+            "surface-dim": "#131313",
+            "on-tertiary-fixed-variant": "#004883",
+            "on-primary-fixed": "#251a00",
+            "on-tertiary": "#00315d",
+            "tertiary": "#dbe8ff",
+            "secondary-fixed": "#dfe2ed",
+            "surface-container-lowest": "#0e0e0e",
+            "on-tertiary-container": "#00579c",
+            "on-secondary": "#2c3038",
+            "primary-fixed-dim": "#f9bd00",
+            "on-primary-container": "#6d5100",
+            "surface-container-high": "#2a2a2a",
+            "surface-tint": "#f9bd00",
+            "inverse-on-surface": "#313030",
+            "tertiary-container": "#accdff",
+            "surface-bright": "#393939",
+            "secondary": "#c3c6d1"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "2.5rem",
+            "gutter": "1rem",
+            "space-lg": "1.5rem",
+            "margin-sm": "1rem",
+            "margin": "1.5rem",
+            "space-sm": "0.5rem",
+            "gutter-dense": "0.5rem",
+            "space-md": "1rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "label-mono-sm": ["Geist"],
+            "body-md": ["Geist"],
+            "display-lg": ["Space Grotesk"],
+            "headline-lg-mobile": ["Space Grotesk"],
+            "headline-md": ["Space Grotesk"],
+            "body-lg": ["Geist"],
+            "body-sm": ["Geist"],
+            "headline-lg": ["Space Grotesk"],
+            "title-sm": ["Space Grotesk"],
+            "label-telemetry": ["Geist"]
+          },
+          "fontSize": {
+            "label-mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "title-sm": ["16px", { "lineHeight": "22px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "label-telemetry": ["10px", { "lineHeight": "12px", "letterSpacing": "0.12em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #0e0e0e;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #4f4632;
+    }
+    .grid-lines {
+      background-size: 28px 28px;
+      background-image: 
+        linear-gradient(to right, rgba(79, 70, 50, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(79, 70, 50, 0.18) 1px, transparent 1px);
+    }
+    .topo-rings {
+      background-image: radial-gradient(circle at center, transparent 40%, rgba(255, 194, 14, 0.04) 41%, transparent 43%, transparent 60%, rgba(79, 70, 50, 0.15) 61%, transparent 63%, transparent 80%, rgba(255, 194, 14, 0.05) 81%, transparent 83%);
+    }
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .animate-pulse-subtle {
+      animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-primary-container selection:text-on-primary-container min-h-screen flex flex-col justify-between overflow-x-hidden relative">
+
+<!-- TOP APP BAR / BRAND HEADER -->
+<header class="w-full px-space-lg py-space-md flex items-center justify-between z-50">
+  <div class="flex items-center gap-3 select-none">
+    <span class="font-display-lg text-2xl font-bold tracking-wider text-primary-container">UMBC</span>
+    <span class="h-4 w-px bg-outline-variant"></span>
+    <span class="font-label-mono-sm text-label-telemetry tracking-widest text-on-surface-variant uppercase">Hydro-GIS Spatial Telemetry</span>
+  </div>
+  <div class="flex items-center gap-2 text-outline">
+    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+    <span class="font-label-mono-sm text-label-telemetry uppercase tracking-wider text-on-surface-variant">Systems Operational</span>
+  </div>
+</header>
+
+<!-- MAIN VIEWPORT CONTAINER -->
+<main class="flex-1 w-full max-w-[1240px] mx-auto px-4 sm:px-6 py-6 md:py-10 flex items-center justify-center">
+  <!-- TWO-COLUMN MODAL / CARD CONTAINER (Matching Image Layout) -->
+  <div class="w-full bg-surface-container-lowest border border-outline-variant rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[640px]">
+    
+    <!-- LEFT COLUMN: BRANDING & MISSION STATEMENT PANEL (lg:col-span-6) -->
+    <section class="lg:col-span-6 bg-surface-container-low border-b lg:border-b-0 lg:border-r border-outline-variant p-8 md:p-12 flex flex-col justify-between relative overflow-hidden">
+      <!-- Subtle atmospheric cartographic grid & rings -->
+      <div class="absolute inset-0 grid-lines pointer-events-none opacity-60"></div>
+      <div class="absolute -top-24 -left-24 w-96 h-96 topo-rings pointer-events-none opacity-70"></div>
+      <div class="absolute -bottom-20 -right-20 w-80 h-80 rounded-full bg-primary-container/5 blur-3xl pointer-events-none"></div>
+
+      <!-- Top Section of Left Panel -->
+      <div class="relative z-10">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container border border-outline-variant mb-8 shadow-sm">
+          <span class="material-symbols-outlined text-primary-container text-sm">water_drop</span>
+          <span class="font-label-mono-sm text-label-telemetry text-primary tracking-widest uppercase">Baltimore County Watershed Network</span>
+        </div>
+        <div class="space-y-4">
+          <span class="font-display-lg text-3xl font-extrabold tracking-tight text-primary-container block">UMBC</span>
+          <h2 class="font-headline-lg text-2xl sm:text-3xl lg:text-4xl font-bold text-on-surface tracking-tight leading-tight">
+            Turn data into resilience.
+          </h2>
+          <p class="font-body-md text-on-surface-variant text-sm md:text-base leading-relaxed max-w-md pt-1">
+            Access enterprise spatial data, watershed catchments, and real-time hydrological monitoring across UMBC campus.
+          </p>
+        </div>
+      </div>
+
+      <!-- Center Cartographic Accent (Technical, Clean, Non-illustrative) -->
+      <div class="relative z-10 my-8 py-6 px-5 bg-surface-container/60 border border-outline-variant/60 rounded-xl backdrop-blur-sm">
+        <div class="flex items-center justify-between mb-4 border-b border-outline-variant/50 pb-3">
+          <div class="flex items-center gap-2">
+            <span id="telemetry-icon" class="material-symbols-outlined text-primary text-base transition-transform">layers</span>
+            <span class="font-label-mono-sm text-label-telemetry uppercase tracking-wider text-on-surface">Telemetry Basemap / Live Runoff</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span class="font-label-mono-sm text-label-telemetry text-primary-container font-semibold">MS4 // VERIFIED</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3 text-left">
+          <div class="p-2.5 rounded bg-surface-container-lowest/80 border border-outline-variant/40">
+            <span class="font-label-mono-sm text-[10px] text-outline block mb-0.5">SENSORS</span>
+            <span class="font-headline-md text-sm md:text-base text-on-surface font-semibold">14 ACTIVE</span>
+          </div>
+          <div class="p-2.5 rounded bg-surface-container-lowest/80 border border-outline-variant/40">
+            <span class="font-label-mono-sm text-[10px] text-outline block mb-0.5">DISCHARGE</span>
+            <span id="stat-discharge" class="font-headline-md text-sm md:text-base text-primary font-semibold font-mono">0.42 m³/s</span>
+          </div>
+          <div class="p-2.5 rounded bg-surface-container-lowest/80 border border-outline-variant/40">
+            <span class="font-label-mono-sm text-[10px] text-outline block mb-0.5">RETENTION</span>
+            <span id="stat-retention" class="font-headline-md text-sm md:text-base text-on-surface font-semibold font-mono">89.4%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Compliance Footnote -->
+      <div class="relative z-10 pt-4 border-t border-outline-variant/40 flex items-center justify-between text-on-surface-variant text-xs">
+        <span class="font-label-mono-sm text-label-telemetry text-secondary">HYDROLOGY LAB // BLDG TRC 204</span>
+        <span class="font-label-mono-sm text-label-telemetry text-primary-container">ESRI ARCGIS 11.2 ENTERPRISE</span>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: LOGIN CREDENTIALS & FORM (lg:col-span-6) -->
+    <section class="lg:col-span-6 bg-surface-container-lowest p-8 md:p-12 flex flex-col justify-between relative">
+      <div>
+        <!-- Symbol / Brand Icon at Header -->
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-lg bg-surface-container border border-outline-variant flex items-center justify-center text-primary-container shadow-inner">
+            <span class="material-symbols-outlined text-2xl">hub</span>
+          </div>
+          <div class="h-2 w-2 rounded-full bg-primary-container animate-ping"></div>
+        </div>
+
+        <!-- Form Heading -->
+        <h1 class="font-headline-lg text-2xl md:text-3xl font-bold text-on-surface tracking-tight mb-2">
+          Login to your Account
+        </h1>
+        <p class="font-body-sm text-on-surface-variant mb-6 text-sm">
+          Division of Information Technology &amp; Facilities Hydrology GIS Lab
+        </p>
+
+        <!-- Inline Error Banner (Hidden by default) -->
+        <div id="auth-error-banner" class="hidden mb-5 p-3 rounded-lg bg-error-container/20 border border-error/50 flex items-start gap-2.5 text-error text-xs">
+          <span class="material-symbols-outlined text-base mt-0.5">error</span>
+          <div class="flex-1">
+            <span class="font-semibold block">Authentication Error</span>
+            <span id="auth-error-text">Please verify your credentials.</span>
+          </div>
+          <button type="button" id="auth-error-close" class="text-error/70 hover:text-error text-sm font-bold">✕</button>
+        </div>
+
+        <!-- Authenticated Session Banner (If already logged in) -->
+        <div id="active-session-banner" class="hidden mb-5 p-4 rounded-lg bg-surface-container border border-primary-container/40 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-label-mono-sm text-xs text-primary font-semibold flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Active GIS Session Detected
+            </span>
+            <span id="session-ttl-text" class="font-label-mono-sm text-[10px] text-secondary">TTL ACTIVE</span>
+          </div>
+          <p class="text-xs text-on-surface-variant">
+            Authenticated as <strong id="session-user-text" class="text-on-surface">gis_operator@umbc.edu</strong>
+          </p>
+          <div class="flex items-center gap-2 pt-1">
+            <a href="index.html" class="flex-1 bg-primary-container hover:bg-[#e5ad08] text-on-primary-container font-headline-md text-xs font-bold uppercase tracking-wider py-2 px-3 rounded flex items-center justify-center gap-1.5 transition-colors">
+              <span class="material-symbols-outlined text-sm">map</span>
+              <span>Launch Telemetry Map</span>
+            </a>
+            <button type="button" id="btn-signout" class="px-3 py-2 bg-surface-container-high hover:bg-error-container hover:text-on-error-container text-on-surface text-xs font-label-mono-sm uppercase rounded border border-outline-variant transition-colors">
+              Sign Out
+            </button>
+          </div>
+        </div>
+
+        <!-- Direct GIS Directory Auth Form -->
+        <form id="gis-login-form" class="space-y-5" novalidate>
+          <!-- Username / Domain Input -->
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <label class="font-label-mono-sm text-label-mono-sm text-on-surface uppercase tracking-wider" for="arcgis-username">
+                ArcGIS Enterprise Username / Domain
+              </label>
+              <span class="font-label-mono-sm text-label-telemetry text-outline">DEFAULT: umbc.maps.arcgis.com</span>
+            </div>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-outline">
+                <span class="material-symbols-outlined text-lg">badge</span>
+              </div>
+              <input 
+                class="w-full bg-surface-container-low border border-outline-variant text-on-surface pl-10 pr-3 py-2.5 rounded-lg font-label-mono-sm text-body-sm focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors duration-150 placeholder:text-outline" 
+                id="arcgis-username" 
+                name="username"
+                placeholder="gis_operator@umbc.edu" 
+                type="text" 
+                value="gis_operator@umbc.edu"
+                required
+                autocomplete="username"
+              />
+            </div>
+          </div>
+
+          <!-- Institutional Key / Password Input -->
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <label class="font-label-mono-sm text-label-mono-sm text-on-surface uppercase tracking-wider" for="arcgis-password">
+                Institutional Key / Password
+              </label>
+              <a class="font-label-mono-sm text-label-telemetry text-primary-container hover:underline modal-trigger" data-modal="forgot" href="#reset">
+                Forgot portal access?
+              </a>
+            </div>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-outline">
+                <span class="material-symbols-outlined text-lg">key</span>
+              </div>
+              <input 
+                class="w-full bg-surface-container-low border border-outline-variant text-on-surface pl-10 pr-10 py-2.5 rounded-lg font-label-mono-sm text-body-sm focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors duration-150" 
+                id="arcgis-password" 
+                name="password"
+                type="password" 
+                value="••••••••••••••••"
+                required
+                autocomplete="current-password"
+              />
+              <button 
+                id="toggle-password-btn"
+                aria-label="Toggle password visibility" 
+                class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-outline hover:text-on-surface cursor-pointer" 
+                type="button"
+              >
+                <span id="password-visibility-icon" class="material-symbols-outlined text-lg">visibility</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Checkbox: Workstation Bind -->
+          <div class="flex items-center justify-between pt-1">
+            <label class="flex items-center gap-2.5 cursor-pointer select-none">
+              <input 
+                id="remember-workstation" 
+                checked="" 
+                class="w-4 h-4 rounded bg-surface-container-low border border-outline-variant text-primary-container focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#ffc20e]" 
+                type="checkbox"
+              />
+              <span class="font-label-mono-sm text-xs text-on-surface-variant">Remember this GIS workstation</span>
+            </label>
+            <span class="font-label-mono-sm text-label-telemetry text-secondary">TTL: 14 DAYS</span>
+          </div>
+
+          <!-- Status Step Tracker during Auth -->
+          <div id="auth-status-box" class="hidden p-3 bg-surface-container border border-primary-container/40 rounded-lg flex items-center gap-3 text-xs text-primary-container animate-pulse">
+            <span class="material-symbols-outlined text-base animate-spin">sync</span>
+            <span id="auth-status-step" class="font-label-mono-sm">Initiating handshake...</span>
+          </div>
+
+          <!-- Primary Submit Action: UMBC Gold (#FFC20E) -->
+          <button 
+            id="auth-submit-btn"
+            class="w-full bg-primary-container hover:bg-[#e5ad08] active:bg-[#d49e00] text-on-primary-container font-headline-md text-sm font-bold uppercase tracking-wider py-3.5 px-space-md rounded-lg flex items-center justify-center gap-2.5 transition-all duration-150 ease-in-out shadow-md hover:shadow-lg cursor-pointer mt-4 disabled:opacity-60 disabled:cursor-not-allowed" 
+            type="submit"
+          >
+            <span id="auth-btn-icon" class="material-symbols-outlined text-lg">lock_open</span>
+            <span id="auth-btn-text">Authenticate via ArcGIS Enterprise</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Right Panel Footer Support Notice -->
+      <div class="mt-8 pt-6 border-t border-outline-variant text-center">
+        <p class="font-body-sm text-xs text-on-surface-variant">
+          Need GIS credential authorization? 
+          <a class="text-primary-container hover:underline font-semibold ml-1 modal-trigger" data-modal="request-access" href="#request-access">
+            Request access via DoIT
+          </a>
+        </p>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- INSTITUTIONAL FOOTER -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant w-full px-space-lg py-4 flex flex-col md:flex-row justify-between items-center gap-space-sm z-50">
+  <div class="flex flex-col sm:flex-row items-center gap-space-sm">
+    <span class="font-label-mono-sm text-label-mono-sm font-bold text-primary">
+      UMBC GIS // HYDRO-PORTAL
+    </span>
+    <span class="hidden sm:inline text-outline-variant">|</span>
+    <p class="font-body-sm text-xs text-secondary text-center sm:text-left">
+      © 2025 University of Maryland, Baltimore County (UMBC) — Division of Information Technology &amp; Facilities Management GIS Lab. All rights reserved.
+    </p>
+  </div>
+  <!-- Legal & Operational Compliance Links -->
+  <nav class="flex flex-wrap items-center gap-x-space-md gap-y-1 font-body-sm text-xs">
+    <a class="text-secondary hover:text-on-surface transition-colors duration-150 modal-trigger" data-modal="status" href="#arcgis-status">ArcGIS Enterprise Status</a>
+    <a class="text-secondary hover:text-on-surface transition-colors duration-150 modal-trigger" data-modal="compliance" href="#watershed">Watershed Compliance</a>
+    <a class="text-secondary hover:text-on-surface transition-colors duration-150 modal-trigger" data-modal="policy" href="#policy">Hydrology Data Policy</a>
+    <a class="text-secondary hover:text-on-surface transition-colors duration-150 modal-trigger" data-modal="sso" href="#sso">Security &amp; SSO Help</a>
+    <a class="text-secondary hover:text-on-surface transition-colors duration-150 modal-trigger" data-modal="emergency" href="#emergency">Emergency Operations</a>
+  </nav>
+</footer>
+
+<!-- MODAL DIALOG CONTAINER -->
+<div id="modal-container" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="modal-card" class="bg-surface-container border border-outline-variant rounded-xl max-w-lg w-full p-6 shadow-2xl relative text-left">
+    <div class="flex justify-between items-center mb-4 border-b border-outline-variant/60 pb-3">
+      <div class="flex items-center gap-2">
+        <span id="modal-icon" class="material-symbols-outlined text-primary-container">info</span>
+        <h3 id="modal-title" class="font-headline-md text-lg font-bold text-on-surface">Modal Title</h3>
+      </div>
+      <button id="modal-close-btn" class="text-outline hover:text-on-surface text-xl leading-none cursor-pointer">✕</button>
+    </div>
+    <div id="modal-body" class="space-y-3 font-body-sm text-sm text-on-surface-variant leading-relaxed">
+      <!-- Injected modal content -->
+    </div>
+    <div class="mt-6 flex justify-end">
+      <button id="modal-action-close" class="px-4 py-2 bg-surface-container-high hover:bg-surface-variant text-on-surface rounded font-label-mono-sm text-xs uppercase tracking-wider cursor-pointer">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- JAVASCRIPT FUNCTIONALITY SCRIPT -->
+<script>
+  (function() {
+    const STORAGE_KEY = "umbc_hydro_gis_session";
+    const WORKSTATION_KEY = "umbc_hydro_gis_saved_workstation";
+    const TTL_14_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
+
+    // Elements
+    const form = document.getElementById("gis-login-form");
+    const usernameInput = document.getElementById("arcgis-username");
+    const passwordInput = document.getElementById("arcgis-password");
+    const togglePasswordBtn = document.getElementById("toggle-password-btn");
+    const visibilityIcon = document.getElementById("password-visibility-icon");
+    const rememberCheckbox = document.getElementById("remember-workstation");
+    const submitBtn = document.getElementById("auth-submit-btn");
+    const submitIcon = document.getElementById("auth-btn-icon");
+    const submitText = document.getElementById("auth-btn-text");
+    const statusBox = document.getElementById("auth-status-box");
+    const statusStep = document.getElementById("auth-status-step");
+    const errorBanner = document.getElementById("auth-error-banner");
+    const errorText = document.getElementById("auth-error-text");
+    const errorClose = document.getElementById("auth-error-close");
+    const activeSessionBanner = document.getElementById("active-session-banner");
+    const sessionUserText = document.getElementById("session-user-text");
+    const btnSignout = document.getElementById("btn-signout");
+
+    let isDefaultMaskedPassword = true;
+
+    // Check remembered workstation on load
+    try {
+      const saved = localStorage.getItem(WORKSTATION_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (new Date(parsed.expiresAt).getTime() > Date.now()) {
+          usernameInput.value = parsed.username;
+        } else {
+          localStorage.removeItem(WORKSTATION_KEY);
+        }
+      }
+    } catch (e) {}
+
+    // Check active session on load
+    function checkExistingSession() {
+      try {
+        let userJson = sessionStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY);
+        if (userJson) {
+          const user = JSON.parse(userJson);
+          if (new Date(user.expiresAt).getTime() > Date.now()) {
+            activeSessionBanner.classList.remove("hidden");
+            sessionUserText.textContent = user.username + " (" + (user.role || "Operator") + ")";
+          } else {
+            sessionStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(STORAGE_KEY);
+            activeSessionBanner.classList.add("hidden");
+          }
+        } else {
+          activeSessionBanner.classList.add("hidden");
+        }
+      } catch (e) {}
+    }
+    checkExistingSession();
+
+    // Sign out button
+    if (btnSignout) {
+      btnSignout.addEventListener("click", function() {
+        sessionStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(STORAGE_KEY);
+        activeSessionBanner.classList.add("hidden");
+        showError("Session terminated. Workstation unbind complete.");
+      });
+    }
+
+    // Toggle password visibility
+    togglePasswordBtn.addEventListener("click", function() {
+      const isPassword = passwordInput.getAttribute("type") === "password";
+      passwordInput.setAttribute("type", isPassword ? "text" : "password");
+      visibilityIcon.textContent = isPassword ? "visibility_off" : "visibility";
+    });
+
+    // Clear placeholder password on initial focus
+    passwordInput.addEventListener("focus", function() {
+      if (isDefaultMaskedPassword) {
+        passwordInput.value = "";
+        isDefaultMaskedPassword = false;
+      }
+    });
+    passwordInput.addEventListener("input", function() {
+      isDefaultMaskedPassword = false;
+    });
+
+    // Error dismiss
+    errorClose.addEventListener("click", function() {
+      errorBanner.classList.add("hidden");
+    });
+
+    function showError(msg) {
+      errorText.textContent = msg;
+      errorBanner.classList.remove("hidden");
+    }
+
+    function hideError() {
+      errorBanner.classList.add("hidden");
+    }
+
+    // Live Telemetry simulation
+    const dischargeEl = document.getElementById("stat-discharge");
+    const retentionEl = document.getElementById("stat-retention");
+    const telemetryIcon = document.getElementById("telemetry-icon");
+
+    setInterval(function() {
+      if (telemetryIcon) {
+        telemetryIcon.classList.add("scale-125", "text-primary-container");
+        setTimeout(function() {
+          telemetryIcon.classList.remove("scale-125", "text-primary-container");
+        }, 600);
+      }
+      if (dischargeEl) {
+        const current = parseFloat(dischargeEl.textContent) || 0.42;
+        const delta = (Math.random() * 0.04 - 0.02);
+        const nextVal = Math.max(0.38, Math.min(0.46, +(current + delta).toFixed(2)));
+        dischargeEl.textContent = nextVal.toFixed(2) + " m³/s";
+      }
+      if (retentionEl) {
+        const current = parseFloat(retentionEl.textContent) || 89.4;
+        const delta = (Math.random() * 0.2 - 0.1);
+        const nextVal = Math.max(88.5, Math.min(90.2, +(current + delta).toFixed(1)));
+        retentionEl.textContent = nextVal.toFixed(1) + "%";
+      }
+    }, 4500);
+
+    // Form submission & authentication
+    form.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      hideError();
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!username) {
+        showError("Please enter your ArcGIS Enterprise Username or Domain.");
+        usernameInput.focus();
+        return;
+      }
+
+      if (!password) {
+        showError("Please enter your Institutional Key or Password.");
+        passwordInput.focus();
+        return;
+      }
+
+      // Enter loading state
+      submitBtn.disabled = true;
+      submitIcon.textContent = "hourglass_top";
+      submitText.textContent = "Verifying Telemetry Credentials...";
+      statusBox.classList.remove("hidden");
+
+      try {
+        statusStep.textContent = "Handshaking with umbc.maps.arcgis.com directory...";
+        await new Promise(r => setTimeout(r, 600));
+
+        statusStep.textContent = "Validating MS4 Spatial Telemetry permissions...";
+        await new Promise(r => setTimeout(r, 600));
+
+        const remember = rememberCheckbox.checked;
+        const expiresAt = new Date(Date.now() + (remember ? TTL_14_DAYS_MS : 8 * 60 * 60 * 1000)).toISOString();
+
+        const userPayload = {
+          username: username,
+          displayName: username.split("@")[0].replace(/[._]/g, " ").toUpperCase(),
+          role: "MS4 Lead Telemetry Operator",
+          lab: "BLDG TRC 204 // Hydrology GIS Lab",
+          portal: "umbc.maps.arcgis.com",
+          authenticatedAt: new Date().toISOString(),
+          expiresAt: expiresAt,
+          workstationBound: remember,
+          token: "esri-token-" + Math.random().toString(36).substring(2, 12)
+        };
+
+        const serialized = JSON.stringify(userPayload);
+        sessionStorage.setItem(STORAGE_KEY, serialized);
+
+        if (remember) {
+          localStorage.setItem(STORAGE_KEY, serialized);
+          localStorage.setItem(WORKSTATION_KEY, JSON.stringify({
+            username: username,
+            expiresAt: expiresAt
+          }));
+        }
+
+        statusStep.textContent = "Credentials Verified! Launching GIS Telemetry Portal...";
+        await new Promise(r => setTimeout(r, 500));
+
+        // Show active session banner
+        checkExistingSession();
+
+        // Redirect to index.html or reload to enter portal
+        if (window.location.pathname.endsWith("login.html")) {
+          window.location.href = "index.html";
+        } else {
+          window.location.reload();
+        }
+      } catch (err) {
+        showError("ArcGIS Enterprise error: Unable to complete authentication handshake.");
+      } finally {
+        submitBtn.disabled = false;
+        submitIcon.textContent = "lock_open";
+        submitText.textContent = "Authenticate via ArcGIS Enterprise";
+        statusBox.classList.add("hidden");
+      }
+    });
+
+    // Modals Management
+    const modalContainer = document.getElementById("modal-container");
+    const modalTitle = document.getElementById("modal-title");
+    const modalIcon = document.getElementById("modal-icon");
+    const modalBody = document.getElementById("modal-body");
+    const modalCloseBtn = document.getElementById("modal-close-btn");
+    const modalActionClose = document.getElementById("modal-action-close");
+
+    const modalData = {
+      "forgot": {
+        title: "ArcGIS Portal Access Recovery",
+        icon: "lock_reset",
+        html: `
+          <p>Portal access credentials are authenticated directly against the <strong>UMBC ArcGIS Enterprise &amp; DoIT Active Directory</strong>.</p>
+          <div class="p-3 bg-surface-container-low rounded border border-outline-variant/50 space-y-1.5">
+            <p class="font-semibold text-on-surface">Institutional Password Reset:</p>
+            <p>Reset your central UMBC identity via the myUMBC account self-service portal:</p>
+            <a href="https://my.umbc.edu/account" target="_blank" class="text-primary-container underline inline-flex items-center gap-1 font-semibold">
+              my.umbc.edu/account <span class="material-symbols-outlined text-xs">open_in_new</span>
+            </a>
+          </div>
+          <p>For dedicated ArcGIS Online tokens or local service account access, contact the lab administrator at <span class="text-primary font-mono">gis-support@umbc.edu</span>.</p>
+        `
+      },
+      "request-access": {
+        title: "Request GIS Lab Authorization",
+        icon: "how_to_reg",
+        html: `
+          <p>Access to the <strong>UMBC Hydro-GIS Spatial Telemetry Portal</strong> is restricted to authorized personnel from the Facilities Hydrology GIS Lab and designated research staff.</p>
+          <ul class="list-disc pl-5 space-y-1 text-xs">
+            <li>Facility: Technology Research Center (TRC 204)</li>
+            <li>Requirement: Active UMBC Campus Directory ID</li>
+            <li>MS4 Phase II Compliance Clearance</li>
+          </ul>
+          <div class="pt-2">
+            <a href="https://doit.umbc.edu" target="_blank" class="inline-flex items-center gap-2 bg-primary-container text-on-primary-container px-4 py-2 rounded font-semibold text-xs uppercase tracking-wider">
+              Submit DoIT Support Ticket <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </a>
+          </div>
+        `
+      },
+      "status": {
+        title: "Enterprise GIS System Status",
+        icon: "dns",
+        html: `
+          <div class="space-y-2">
+            <div class="flex justify-between items-center p-2 rounded bg-surface-container-low border border-outline-variant/30">
+              <span>ArcGIS Enterprise Server 11.2</span>
+              <span class="text-emerald-400 font-semibold flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span> 99.98% Operational
+              </span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded bg-surface-container-low border border-outline-variant/30">
+              <span>Watershed Sensor Telemetry Feed</span>
+              <span class="text-emerald-400 font-semibold flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span> 14/14 Online (18ms)
+              </span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded bg-surface-container-low border border-outline-variant/30">
+              <span>DoIT SSO Identity Provider</span>
+              <span class="text-emerald-400 font-semibold flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Active
+              </span>
+            </div>
+          </div>
+        `
+      },
+      "compliance": {
+        title: "MS4 Watershed Compliance Standards",
+        icon: "verified",
+        html: `
+          <p>This system supports compliance with the <strong>Maryland Department of the Environment (MDE) National Pollutant Discharge Elimination System (NPDES) General Permit</strong> for Municipal Separate Storm Sewer Systems (MS4).</p>
+          <p class="text-xs">Continuous monitoring measures runoff discharge, sediment retention, and campus watershed impervious surface coverage in accordance with Maryland Phase II guidelines.</p>
+        `
+      },
+      "policy": {
+        title: "UMBC Hydrology Spatial Data Policy",
+        icon: "policy",
+        html: `
+          <p>Hydrological and spatial telemetry gathered on the UMBC campus is classified as <strong>Institutional Tier 2 Research &amp; Facilities Data</strong>.</p>
+          <p class="text-xs">Data may be used for internal research, campus planning, stormwater management, and regulatory compliance reporting. Unauthorized redistribution or scraping is prohibited.</p>
+        `
+      },
+      "sso": {
+        title: "Security & Single Sign-On Guidance",
+        icon: "shield",
+        html: `
+          <p>Authentication utilizes UMBC Shibboleth Single Sign-On with Duo Security Multi-Factor Authentication (MFA).</p>
+          <p class="text-xs">When accessing from a recognized TRC GIS workstation with the <em>Remember Workstation</em> option enabled, credential tokens remain valid for a 14-day TTL cycle.</p>
+        `
+      },
+      "emergency": {
+        title: "Stormwater Emergency Response",
+        icon: "warning",
+        html: `
+          <div class="space-y-2">
+            <p class="text-error font-semibold">Campus Flooding or Hazardous Spill Emergency Protocol:</p>
+            <div class="p-3 bg-error-container/20 border border-error/40 rounded text-xs space-y-1">
+              <p class="text-on-surface font-semibold">Facilities Management 24/7 Dispatch:</p>
+              <p class="text-error font-mono text-sm">(410) 455-2550</p>
+              <p class="text-on-surface font-semibold pt-1">UMBC Police Emergency:</p>
+              <p class="text-error font-mono text-sm">(410) 455-5555</p>
+            </div>
+          </div>
+        `
+      }
+    };
+
+    function openModal(modalKey) {
+      const data = modalData[modalKey];
+      if (!data) return;
+      modalTitle.textContent = data.title;
+      modalIcon.textContent = data.icon;
+      modalBody.innerHTML = data.html;
+      modalContainer.classList.remove("hidden");
+    }
+
+    function closeModal() {
+      modalContainer.classList.add("hidden");
+    }
+
+    document.querySelectorAll(".modal-trigger").forEach(function(el) {
+      el.addEventListener("click", function(e) {
+        e.preventDefault();
+        const key = this.getAttribute("data-modal");
+        openModal(key);
+      });
+    });
+
+    modalCloseBtn.addEventListener("click", closeModal);
+    modalActionClose.addEventListener("click", closeModal);
+    modalContainer.addEventListener("click", function(e) {
+      if (e.target === modalContainer) closeModal();
+    });
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape" && !modalContainer.classList.contains("hidden")) {
+        closeModal();
+      }
+    });
+
+  })();
+</script>
+
+</body>
+</html>

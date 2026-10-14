@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { LoginPage } from "./LoginPage";
+import { authService } from "./auth/authService";
 
 // Optional: If you're loading secure web maps
 // import { configureOAuth } from "./auth/configureOAuth";
@@ -28,6 +30,7 @@ import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol.js";
 import type WebMap from "@arcgis/core/WebMap.js";
 
 export function App(): React.JSX.Element {
+  const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUser());
   const [navHeading, setNavHeading] = useState("");
   const [navDescription, setNavDescription] = useState("");
 
@@ -73,17 +76,51 @@ export function App(): React.JSX.Element {
     viewElement.graphics.add(pointGraphic);
   };
 
+  const handleLogout = () => {
+    authService.logout();
+    setCurrentUser(null);
+  };
+
+  if (!currentUser) {
+    return <LoginPage onLoginSuccess={(user) => setCurrentUser(user)} />;
+  }
+
   return (
     // The Shell component is used as a layout for this template
     <calcite-shell content-behind>
       <calcite-navigation slot="header">
         {/* Heading and description dynamically populated */}
         <calcite-navigation-logo
-          heading={navHeading}
-          description={navDescription}
+          heading={navHeading || "UMBC Hydro-GIS Spatial Telemetry"}
+          description={navDescription || "Baltimore County Watershed Catchments & Live Runoff"}
           heading-level="1"
           slot="logo"
         ></calcite-navigation-logo>
+
+        {/* Authenticated User Badge & Logout Button */}
+        <div
+          slot="navigation-actions"
+          className="flex items-center gap-3 px-3 py-1 text-xs"
+          style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.25rem 0.75rem" }}
+        >
+          <div
+            className="flex items-center gap-2 bg-[#201f1f] px-2.5 py-1 rounded border border-[#4f4632]"
+            style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span className="text-[#ffe5b1] font-semibold">{currentUser.username}</span>
+            <span className="text-[#c3c6d1] text-[10px]">[{currentUser.role}]</span>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1 px-2.5 py-1 bg-[#131313] hover:bg-[#690005] hover:text-[#ffdad6] text-[#e5e2e1] rounded border border-[#4f4632] transition-colors cursor-pointer text-xs uppercase"
+            style={{ display: "flex", alignItems: "center", gap: "0.25rem", cursor: "pointer" }}
+            title="Sign out of ArcGIS Enterprise session"
+          >
+            <span className="material-symbols-outlined text-sm">logout</span>
+            <span>Sign Out</span>
+          </button>
+        </div>
       </calcite-navigation>
       {/* The Map component fits to the size of the parent element  */}
       {/* The basemap, extent, zoom and more are provided by the Web Map (item-id) */}
