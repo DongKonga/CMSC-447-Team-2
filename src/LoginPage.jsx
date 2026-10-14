@@ -199,11 +199,6 @@ export function LoginPage({ onLoginSuccess }) {
           </p>
         </div>
 
-        {/* Bottom Lockup: Lab & Department Footnote */}
-        <div className="relative z-10 pt-6 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-          <span>Hydrology GIS Lab • TRC Bldg 204</span>
-          <span className="text-[#ffc20e] font-medium">Internal Utility</span>
-        </div>
       </section>
 
       {/* ======================================================== */}
