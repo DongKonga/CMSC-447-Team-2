@@ -6,6 +6,12 @@ body {
   margin: 0;
 }
 
+:root {
+	--calcite-color-foreground-1: #0B0F19;
+	--calcite-color-text-1: #ffffff;
+	--calcite-color-text-2: #94A2B8;
+}
+
 arcgis-chart {
   width: 350px;
   height: 250px;
