@@ -39,39 +39,10 @@ export function App() {
     const title = portalItem?.title ? portalItem.title : "A web map"
     const description = portalItem?.description
       ? portalItem.description
-      : "ArcGIS Maps SDK for JavaScript template"
+      : "CMSC 447 Section 5 Team 2"
 
     setNavHeading(title)
     setNavDescription(description)
-
-    // Define a point geometry
-    const point = new Point({
-      longitude: -98.38,
-      latitude: 38.34
-    })
-
-    // Create an outline for the marker symbol
-    const outline = new SimpleLineSymbol({
-      color: "white",
-      width: 2
-    })
-
-    // Create a symbol for drawing the point
-    const symbol = new SimpleMarkerSymbol({
-      style: "triangle",
-      size: 20,
-      color: "red",
-      outline
-    })
-
-    // Create a graphic and add the geometry and symbol to it
-    const pointGraphic = new Graphic({
-      geometry: point,
-      symbol
-    })
-
-    // Add a graphic to demonstrate custom visualizations beyond Web Map content
-    viewElement.graphics.add(pointGraphic)
   }
 
   return (
@@ -90,21 +61,16 @@ export function App() {
       {/* The basemap, extent, zoom and more are provided by the Web Map (item-id) */}
       {/* Note: popup-component-enabled enables the Popup component (beta). See https://developers.arcgis.com/javascript/latest/references/map-components/components/arcgis-map/#popupComponentEnabled for details. */}
       <arcgis-map
-        item-id="dd4b2f25487d4a37a45093ba6acd026d"
+        item-id="764b68e81e2449fd87136908af258c24"
         popup-component-enabled
         onarcgisViewReadyChange={handleViewReady}
       >
-        <arcgis-zoom slot="top-left" />
-        <arcgis-search slot="top-right" />
-        <arcgis-expand slot="bottom-left">
+        <arcgis-zoom slot="bottom-right" />
+        <arcgis-search slot="top-left" />
+        <arcgis-expand slot="top-right">
           <arcgis-legend></arcgis-legend>
         </arcgis-expand>
         {/*  A Feature Layer in the Web Map has an associated chart (layer-item-id) */}
-        <arcgis-chart
-          layer-item-id="b1717962dab247ad93eaca257b32fe02"
-          chart-index="1"
-          slot="bottom-right"
-        ></arcgis-chart>
       </arcgis-map>
     </calcite-shell>
   )
