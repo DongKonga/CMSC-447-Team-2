@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 
 // Optional: If you're loading secure web maps
 // import { configureOAuth } from "./auth/configureOAuth";
@@ -21,16 +21,23 @@ import "@esri/calcite-components/components/calcite-navigation"
 import "@esri/calcite-components/components/calcite-navigation-logo"
 
 // Import modules and types from the SDK's core API
+import CustomContent from "@arcgis/core/popup/content/CustomContent.js"
 import Graphic from "@arcgis/core/Graphic.js"
 import Point from "@arcgis/core/geometry/Point.js"
+import PopupTemplate from "@arcgis/core/PopupTemplate.js"
 import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol.js"
 import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol.js"
+
+// Custom imports
+import umbcLogo from "./assets/umbc_shield.png"
+import { CustomParametersMixin } from "@arcgis/core/layers/mixins/CustomParametersMixin"
 
 export function App() {
   const [navHeading, setNavHeading] = useState("")
   const [navDescription, setNavDescription] = useState("")
+  const mapRef = useRef(null)
 
-  const handleViewReady = event => {
+  const handleViewReady = async (event) => {
     const viewElement = event.target
 
     // Use metadata from the Web Map to populate the header
@@ -43,6 +50,72 @@ export function App() {
 
     setNavHeading(title)
     setNavDescription(description)
+
+    await map.loadAll()
+
+    const bmpLayer = map.allLayers.find((layer) => layer.title === "BMP Database")
+
+    if (bmpLayer) {
+
+      bmpLayer.popupTemplate = new PopupTemplate({
+        title: bmpLayer.popupTemplate?.title || "{BMP ID}",
+        content: bmpLayer.popupTemplate?.content || "{*}"
+      })
+
+      // Create Popup Buttons
+      const workOrderButtonContent = new CustomContent({
+        creator: (event) => {
+          const graphic = event.graphic || event
+          const attributes = graphic.attributes || {}
+
+          const button = document.createElement("calcite-button")
+          button.textContent = "Create Work Order"
+          button.width = "full"
+          button.scale = "m"
+          button.appearance = "solid"
+          button.style.marginTop = "12px"
+
+          button.addEventListener("click", () => {
+            alert("TODO: Redirect to work order template")
+          })
+
+          return button
+        },
+      })
+
+      const inspectionReportButtonContent = new CustomContent({
+        creator: (event) => {
+          const graphic = event.graphic || event
+          const attributes = graphic.attributes || {}
+
+          const button = document.createElement("calcite-button")
+          button.textContent = "Conduct Inspection Report"
+          button.width = "full"
+          button.scale = "l"
+          button.appearance = "solid"
+          button.style.marginTop = "12px"
+
+          button.addEventListener("click", () => {
+            alert("TODO: Redirect to inspection report template")
+          })
+
+          return button
+        },
+      })
+
+      if (Array.isArray(bmpLayer.popupTemplate.content)) {
+        bmpLayer.popupTemplate.content.push(inspectionReportButtonContent)
+        bmpLayer.popupTemplate.content.push(workOrderButtonContent)
+      } else {
+        bmpLayer.popupTemplate.content = [
+          { type: "fields" },
+          inspectionReportButtonContent,
+          workOrderButtonContent
+        ]
+      }
+    } else {
+      console.warn("BMP Database layer not found...")
+    }
   }
 
   return (
@@ -55,6 +128,7 @@ export function App() {
           description={navDescription}
           heading-level="1"
           slot="logo"
+          thumbnail={umbcLogo}
         ></calcite-navigation-logo>
       </calcite-navigation>
       {/* The Map component fits to the size of the parent element  */}
