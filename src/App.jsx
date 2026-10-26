@@ -19,6 +19,7 @@ import "@arcgis/charts-components/components/arcgis-chart"
 import "@esri/calcite-components/components/calcite-shell"
 import "@esri/calcite-components/components/calcite-navigation"
 import "@esri/calcite-components/components/calcite-navigation-logo"
+import "@esri/calcite-components/components/calcite-action"
 
 // Import modules and types from the SDK's core API
 import CustomContent from "@arcgis/core/popup/content/CustomContent.js"
@@ -130,6 +131,16 @@ export function App() {
           slot="logo"
           thumbnail={umbcLogo}
         ></calcite-navigation-logo>
+
+        <calcite-action 
+          slot="content-end"
+          icon="user"
+          text="Account"
+          text-enabled
+          onClick={() => {
+            alert("TODO: Account info dropdown")
+          }}
+        ></calcite-action>
       </calcite-navigation>
       {/* The Map component fits to the size of the parent element  */}
       {/* The basemap, extent, zoom and more are provided by the Web Map (item-id) */}
