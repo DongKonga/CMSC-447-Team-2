@@ -7,12 +7,9 @@ body {
 }
 
 :root {
+  /* Color Customization */
 	--calcite-color-foreground-1: #0B0F19;
+  --calcite-color-foreground-2: #161e33;
 	--calcite-color-text-1: #ffffff;
 	--calcite-color-text-2: #94A2B8;
-}
-
-arcgis-chart {
-  width: 350px;
-  height: 250px;
 }
