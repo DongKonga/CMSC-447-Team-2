@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { LoginPage } from "./LoginPage";
-import { authService } from "./auth/authService";
+import { useState } from "react"
+import { LoginPage } from "./LoginPage"
+import { authService } from "./auth/authService"
 
 // Optional: If you're loading secure web maps
 // import { configureOAuth } from "./auth/configureOAuth";
@@ -12,77 +12,80 @@ import { authService } from "./auth/authService";
 // });
 
 // Individual imports for each Map, Chart and Calcite component
-import "@arcgis/map-components/components/arcgis-expand";
-import "@arcgis/map-components/components/arcgis-legend";
-import "@arcgis/map-components/components/arcgis-map";
-import "@arcgis/map-components/components/arcgis-search";
-import "@arcgis/map-components/components/arcgis-zoom";
-import "@arcgis/charts-components/components/arcgis-chart";
-import "@esri/calcite-components/components/calcite-shell";
-import "@esri/calcite-components/components/calcite-navigation";
-import "@esri/calcite-components/components/calcite-navigation-logo";
+import "@arcgis/map-components/components/arcgis-expand"
+import "@arcgis/map-components/components/arcgis-legend"
+import "@arcgis/map-components/components/arcgis-map"
+import "@arcgis/map-components/components/arcgis-search"
+import "@arcgis/map-components/components/arcgis-zoom"
+import "@arcgis/charts-components/components/arcgis-chart"
+import "@esri/calcite-components/components/calcite-shell"
+import "@esri/calcite-components/components/calcite-navigation"
+import "@esri/calcite-components/components/calcite-navigation-logo"
 
 // Import modules and types from the SDK's core API
-import Graphic from "@arcgis/core/Graphic.js";
-import Point from "@arcgis/core/geometry/Point.js";
-import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol.js";
-import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol.js";
-import type WebMap from "@arcgis/core/WebMap.js";
+import Graphic from "@arcgis/core/Graphic.js"
+import Point from "@arcgis/core/geometry/Point.js"
+import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol.js"
+import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol.js"
 
-export function App(): React.JSX.Element {
-  const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUser());
-  const [navHeading, setNavHeading] = useState("");
-  const [navDescription, setNavDescription] = useState("");
+export function App() {
+  const [currentUser, setCurrentUser] = useState(() =>
+    authService.getCurrentUser()
+  )
+  const [navHeading, setNavHeading] = useState("")
+  const [navDescription, setNavDescription] = useState("")
 
-  const handleViewReady = (event: CustomEvent): void => {
-    const viewElement = event.target as HTMLArcgisMapElement;
+  const handleViewReady = event => {
+    const viewElement = event.target
 
     // Use metadata from the Web Map to populate the header
-    const map = viewElement.map as WebMap;
-    const portalItem = map.portalItem;
-    const title = portalItem?.title ? portalItem.title : "A web map";
-    const description = portalItem?.description ? portalItem.description : "ArcGIS Maps SDK for JavaScript template";
+    const map = viewElement.map
+    const portalItem = map.portalItem
+    const title = portalItem?.title ? portalItem.title : "A web map"
+    const description = portalItem?.description
+      ? portalItem.description
+      : "ArcGIS Maps SDK for JavaScript template"
 
-    setNavHeading(title);
-    setNavDescription(description);
+    setNavHeading(title)
+    setNavDescription(description)
 
     // Define a point geometry
     const point = new Point({
       longitude: -98.38,
-      latitude: 38.34,
-    });
+      latitude: 38.34
+    })
 
     // Create an outline for the marker symbol
     const outline = new SimpleLineSymbol({
       color: "white",
-      width: 2,
-    });
+      width: 2
+    })
 
     // Create a symbol for drawing the point
     const symbol = new SimpleMarkerSymbol({
       style: "triangle",
       size: 20,
       color: "red",
-      outline,
-    });
+      outline
+    })
 
     // Create a graphic and add the geometry and symbol to it
     const pointGraphic = new Graphic({
       geometry: point,
-      symbol,
-    });
+      symbol
+    })
 
     // Add a graphic to demonstrate custom visualizations beyond Web Map content
-    viewElement.graphics.add(pointGraphic);
-  };
+    viewElement.graphics.add(pointGraphic)
+  }
 
   const handleLogout = () => {
-    authService.logout();
-    setCurrentUser(null);
-  };
+    authService.logout()
+    setCurrentUser(null)
+  }
 
   if (!currentUser) {
-    return <LoginPage onLoginSuccess={(user) => setCurrentUser(user)} />;
+    return <LoginPage onLoginSuccess={user => setCurrentUser(user)} />
   }
 
   return (
@@ -92,7 +95,10 @@ export function App(): React.JSX.Element {
         {/* Heading and description dynamically populated */}
         <calcite-navigation-logo
           heading={navHeading || "UMBC Hydro-GIS Spatial Telemetry"}
-          description={navDescription || "Baltimore County Watershed Catchments & Live Runoff"}
+          description={
+            navDescription ||
+            "Baltimore County Watershed Catchments & Live Runoff"
+          }
           heading-level="1"
           slot="logo"
         ></calcite-navigation-logo>
@@ -100,7 +106,12 @@ export function App(): React.JSX.Element {
         {/* Authenticated User Badge & Logout Button */}
         <div
           slot="navigation-actions"
-          style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.25rem 0.75rem" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            padding: "0.25rem 0.75rem"
+          }}
         >
           <div
             style={{
@@ -111,11 +122,20 @@ export function App(): React.JSX.Element {
               padding: "0.25rem 0.6rem",
               borderRadius: "0.5rem",
               border: "1px solid #333333",
-              fontSize: "0.75rem",
+              fontSize: "0.75rem"
             }}
           >
-            <span style={{ width: "6px", height: "6px", borderRadius: "9999px", backgroundColor: "#22c55e" }}></span>
-            <span style={{ color: "#ffc20e", fontWeight: "600" }}>{currentUser.username}</span>
+            <span
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "9999px",
+                backgroundColor: "#22c55e"
+              }}
+            ></span>
+            <span style={{ color: "#ffc20e", fontWeight: "600" }}>
+              {currentUser.username}
+            </span>
           </div>
           <button
             onClick={handleLogout}
@@ -129,11 +149,16 @@ export function App(): React.JSX.Element {
               borderRadius: "0.5rem",
               border: "1px solid #404040",
               fontSize: "0.75rem",
-              cursor: "pointer",
+              cursor: "pointer"
             }}
             title="Sign out of UMBC Stormwater session"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>logout</span>
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: "14px" }}
+            >
+              logout
+            </span>
             <span>Sign Out</span>
           </button>
         </div>
@@ -159,5 +184,5 @@ export function App(): React.JSX.Element {
         ></arcgis-chart>
       </arcgis-map>
     </calcite-shell>
-  );
+  )
 }
