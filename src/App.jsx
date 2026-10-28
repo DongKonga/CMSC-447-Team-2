@@ -80,6 +80,7 @@ export function App() {
           button.scale = "m"
           button.appearance = "solid"
           button.style.marginTop = "12px"
+          button.style.setProperty("--calcite-font-weight-normal", "bold")
 
           button.addEventListener("click", () => {
             alert("TODO: Redirect to work order template")
@@ -100,6 +101,7 @@ export function App() {
           button.scale = "l"
           button.appearance = "solid"
           button.style.marginTop = "12px"
+          button.style.setProperty("--calcite-font-weight-normal", "bold")
 
           button.addEventListener("click", () => {
             alert("TODO: Redirect to inspection report template")
