@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react"
+import { LoginPage } from "./LoginPage"
+import { authService } from "./auth/authService"
 
 // Optional: If you're loading secure web maps
 // import { configureOAuth } from "./auth/configureOAuth";
@@ -34,6 +36,9 @@ import umbcLogo from "./assets/umbc_shield.png"
 import { CustomParametersMixin } from "@arcgis/core/layers/mixins/CustomParametersMixin"
 
 export function App() {
+  const [currentUser, setCurrentUser] = useState(() =>
+    authService.getCurrentUser()
+  )
   const [navHeading, setNavHeading] = useState("")
   const [navDescription, setNavDescription] = useState("")
   const mapRef = useRef(null)
@@ -119,14 +124,26 @@ export function App() {
     }
   }
 
+  const handleLogout = () => {
+    authService.logout()
+    setCurrentUser(null)
+  }
+
+  if (!currentUser) {
+    return <LoginPage onLoginSuccess={user => setCurrentUser(user)} />
+  }
+
   return (
     // The Shell component is used as a layout for this template
     <calcite-shell content-behind>
       <calcite-navigation slot="header">
         {/* Heading and description dynamically populated */}
         <calcite-navigation-logo
-          heading={navHeading}
-          description={navDescription}
+          heading={navHeading || "UMBC Hydro-GIS Spatial Telemetry"}
+          description={
+            navDescription ||
+            "Baltimore County Watershed Catchments & Live Runoff"
+          }
           heading-level="1"
           slot="logo"
           thumbnail={umbcLogo}
@@ -141,6 +158,65 @@ export function App() {
             alert("TODO: Account info dropdown")
           }}
         ></calcite-action>
+        {/* Authenticated User Badge & Logout Button */}
+        <div
+          slot="navigation-actions"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            padding: "0.25rem 0.75rem"
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              backgroundColor: "#1a1a1a",
+              padding: "0.25rem 0.6rem",
+              borderRadius: "0.5rem",
+              border: "1px solid #333333",
+              fontSize: "0.75rem"
+            }}
+          >
+            <span
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "9999px",
+                backgroundColor: "#22c55e"
+              }}
+            ></span>
+            <span style={{ color: "#ffc20e", fontWeight: "600" }}>
+              {currentUser.username}
+            </span>
+          </div>
+          <button
+            onClick={handleLogout}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.35rem",
+              padding: "0.25rem 0.6rem",
+              backgroundColor: "#262626",
+              color: "#e5e5e5",
+              borderRadius: "0.5rem",
+              border: "1px solid #404040",
+              fontSize: "0.75rem",
+              cursor: "pointer"
+            }}
+            title="Sign out of UMBC Stormwater session"
+          >
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: "14px" }}
+            >
+              logout
+            </span>
+            <span>Sign Out</span>
+          </button>
+        </div>
       </calcite-navigation>
       {/* The Map component fits to the size of the parent element  */}
       {/* The basemap, extent, zoom and more are provided by the Web Map (item-id) */}
