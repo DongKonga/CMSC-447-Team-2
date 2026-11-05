@@ -1,0 +1,98 @@
+# ============================================================
+# docker-compose.yml - Runs the API and the database together
+#
+# WHY DO WE NEED THIS?
+# Our back end is really two programs: the API (our Python code) and
+# the database (PostgreSQL). Instead of starting each one by hand, this
+# file starts both with one command:
+#
+#     docker compose up --build
+#
+# Each item under "services" is one container.
+# ============================================================
+
+services:
+
+  # ---------- THE DATABASE ----------
+  db:
+    # A ready-made image with PostgreSQL 16 already installed.
+    # "alpine" is a very small version, so it downloads faster.
+    image: postgres:16-alpine
+
+    # Settings for the database. These create the login and the
+    # database name the first time it starts.
+    # (These simple passwords are fine for local testing only. A real
+    # server would use secret passwords kept out of GitHub.)
+    environment:
+      POSTGRES_USER: stormwater
+      POSTGRES_PASSWORD: stormwater
+      POSTGRES_DB: stormwater
+
+    # "5432:5432" connects port 5432 on your laptop to port 5432 inside
+    # the container. That lets you look inside the database with a tool
+    # like pgAdmin or DBeaver if you want to.
+    ports:
+      - "5432:5432"
+
+    volumes:
+      # Save the database files in a named storage area called db_data.
+      # Without this, all data would vanish every time the container stops.
+      - db_data:/var/lib/postgresql/data
+      # Put our init.sql where the database image looks for setup scripts.
+      # ":ro" means read-only, so the container can't change our file.
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+    # A health check asks "are you ready yet?" every 5 seconds.
+    # pg_isready is a small PostgreSQL tool that answers that question.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stormwater -d stormwater"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---------- THE API ----------
+  api:
+    # Build this container from the Dockerfile in this same folder.
+    build: .
+
+    environment:
+      # Tells db.py where the database is. Notice the host is "db",
+      # not "localhost". Inside Docker, containers find each other by
+      # their service name, and our database service is named "db".
+      DATABASE_URL: postgresql://stormwater:stormwater@db:5432/stormwater
+
+      # Which front end addresses may call the API (see CORS in main.py).
+      # 5173 is the port our Vite React front end runs on.
+      FRONTEND_ORIGINS: http://localhost:5173
+
+      # ----- Email settings (see emailer.py) -----
+      # SMTP_HOST is empty on purpose, which turns on "dry run" mode:
+      # emails get printed in this terminal instead of really sent.
+      # Fill these in once we get UMBC's mail server details.
+      SMTP_HOST: ""
+      SMTP_PORT: "587"
+      WORKORDER_EMAIL: workorder@umbc.edu
+
+    # Makes the API reachable at http://localhost:8000 on your laptop.
+    ports:
+      - "8000:8000"
+
+    # Link your app and tests folders into the container. Combined with
+    # --reload below, when you save a change, the API restarts on its
+    # own. No rebuilding needed while you code.
+    volumes:
+      - ./app:/code/app
+      - ./tests:/code/tests
+
+    # Same start command as the Dockerfile, plus --reload for development.
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+    # Don't start the API until the database health check passes.
+    # Otherwise the API might start first and fail to connect.
+    depends_on:
+      db:
+        condition: service_healthy
+
+# Declares the named storage area used by the database above.
+volumes:
+  db_data:
