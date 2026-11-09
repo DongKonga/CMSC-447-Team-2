@@ -1,0 +1,17 @@
+# Python libraries the API needs. Docker installs these automatically.
+# The == pins an exact version so everyone on the team gets the same one.
+
+# fastapi: the framework we build the API with
+fastapi==0.115.6
+
+# uvicorn: the web server that actually runs the FastAPI app
+uvicorn[standard]==0.32.1
+
+# psycopg: lets Python talk to PostgreSQL
+psycopg[binary]==3.2.3
+
+# pytest: runs our automated tests (tests/test_api.py)
+pytest==8.3.4
+
+# httpx: needed by FastAPI's TestClient, which the tests use
+httpx==0.28.1

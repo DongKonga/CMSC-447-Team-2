@@ -1,0 +1,12 @@
+# Files Git should NOT upload to GitHub.
+
+# Python's auto-generated cache files. They get rebuilt anyway.
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# A local Python virtual environment, if you make one. It's huge and personal to your machine.
+.venv/
+
+# Secret settings like passwords. Never upload these.
+.env
