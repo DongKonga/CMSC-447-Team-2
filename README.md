@@ -36,4 +36,5 @@ See the [Get started with npm guide](https://developers.arcgis.com/javascript/la
 ## INSTRUCTIONS
 
 Run `npm run dev` to run project.
+Run with `-- --host` to expose and host over the network.
 ## TODO: Add more instructions if needed as project expands
