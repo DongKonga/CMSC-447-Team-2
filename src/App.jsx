@@ -1,4 +1,15 @@
-import { useState, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
+import { LoginPage } from "./LoginPage"
+import { authService } from "./auth/authService"
+
+// Optional: If you're loading secure web maps
+// import { configureOAuth } from "./auth/configureOAuth";
+// configureOAuth({
+//   // Default portalUrl is ArcGIS Online
+//   // Only set if using other portals
+//   portalUrl: "YOUR_PORTAL_URL",
+//   appId: "YOUR_APP_ID",
+// });
 
 // Individual imports for each Map, Chart and Calcite component
 import "@arcgis/map-components/components/arcgis-expand"
@@ -20,20 +31,17 @@ import PopupTemplate from "@arcgis/core/PopupTemplate.js"
 import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol.js"
 import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol.js"
 
-// Auth and Login components (Simple username/password login)
-import { getStoredUser, logout } from "./auth/authService"
-import { Login } from "./Login"
+// Custom imports
+import umbcLogo from "./assets/umbc_shield.png"
+import { CustomParametersMixin } from "@arcgis/core/layers/mixins/CustomParametersMixin"
 
 export function App() {
-  const [currentUser, setCurrentUser] = useState(() => getStoredUser())
+  const [currentUser, setCurrentUser] = useState(() =>
+    authService.getCurrentUser()
+  )
   const [navHeading, setNavHeading] = useState("")
   const [navDescription, setNavDescription] = useState("")
   const mapRef = useRef(null)
-
-  const handleLogout = () => {
-    logout()
-    setCurrentUser(null)
-  }
 
   const handleViewReady = async (event) => {
     const viewElement = event.target
@@ -41,7 +49,7 @@ export function App() {
     // Use metadata from the Web Map to populate the header
     const map = viewElement.map
     const portalItem = map.portalItem
-    const title = portalItem?.title ? portalItem.title : "Stormwater GIS"
+    const title = portalItem?.title ? portalItem.title : "A web map"
     const description = portalItem?.description
       ? portalItem.description
       : "CMSC 447 Section 5 Team 2"
@@ -52,34 +60,21 @@ export function App() {
     await map.loadAll()
 
     const bmpLayer = map.allLayers.find((layer) => layer.title === "BMP Database")
+    const bmpLayerIcons = map.allLayers.find((layer) => layer.title === "BMP Database - Icons")
 
-    if (bmpLayer) {
+    if (bmpLayer && bmpLayerIcons) {
+
       bmpLayer.popupTemplate = new PopupTemplate({
         title: bmpLayer.popupTemplate?.title || "{BMP ID}",
         content: bmpLayer.popupTemplate?.content || "{*}"
       })
 
-      // Create Popup Buttons
-      const workOrderButtonContent = new CustomContent({
-        creator: (event) => {
-          const graphic = event.graphic || event
-          const attributes = graphic.attributes || {}
-
-          const button = document.createElement("calcite-button")
-          button.textContent = "Create Work Order"
-          button.width = "full"
-          button.scale = "m"
-          button.appearance = "solid"
-          button.style.marginTop = "12px"
-
-          button.addEventListener("click", () => {
-            alert("TODO: Redirect to work order template")
-          })
-
-          return button
-        },
+      bmpLayerIcons.popupTemplate = new PopupTemplate({
+        title: bmpLayerIcons.popupTemplate?.title || "{BMP ID}",
+        content: bmpLayerIcons.popupTemplate?.content || "{*}"
       })
 
+      // Create Popup Buttons
       const inspectionReportButtonContent = new CustomContent({
         creator: (event) => {
           const graphic = event.graphic || event
@@ -91,6 +86,7 @@ export function App() {
           button.scale = "l"
           button.appearance = "solid"
           button.style.marginTop = "12px"
+          button.style.setProperty("--calcite-font-weight-normal", "bold")
 
           button.addEventListener("click", () => {
             alert("TODO: Redirect to inspection report template")
@@ -100,14 +96,17 @@ export function App() {
         },
       })
 
-      if (Array.isArray(bmpLayer.popupTemplate.content)) {
+      if (Array.isArray(bmpLayer.popupTemplate.content) && Array.isArray(bmpLayerIcons.popupTemplate.content)) {
         bmpLayer.popupTemplate.content.push(inspectionReportButtonContent)
-        bmpLayer.popupTemplate.content.push(workOrderButtonContent)
+        bmpLayerIcons.popupTemplate.content.push(inspectionReportButtonContent)
       } else {
         bmpLayer.popupTemplate.content = [
           { type: "fields" },
-          inspectionReportButtonContent,
-          workOrderButtonContent
+          inspectionReportButtonContent
+        ]
+        bmpLayerIcons.popupTemplate.content = [
+          { type: "fields" },
+          inspectionReportButtonContent
         ]
       }
     } else {
@@ -115,9 +114,17 @@ export function App() {
     }
   }
 
-  // If not authenticated, render simplified username/password login page
+  const handleLogout = () => {
+    authService.logout()
+    setCurrentUser(null)
+  }
+
+  const handlePastInspectionReports = () => {
+    alert("TODO: Redirect to to past inspection reports")
+  }
+
   if (!currentUser) {
-    return <Login onLoginSuccess={(user) => setCurrentUser(user)} />
+    return <LoginPage onLoginSuccess={user => setCurrentUser(user)} />
   }
 
   return (
@@ -126,30 +133,96 @@ export function App() {
       <calcite-navigation slot="header">
         {/* Heading and description dynamically populated */}
         <calcite-navigation-logo
-          heading={navHeading}
-          description={navDescription}
+          heading={navHeading || "UMBC Hydro-GIS Spatial Telemetry"}
+          description={
+            navDescription ||
+            "Baltimore County Watershed Catchments & Live Runoff"
+          }
           heading-level="1"
           slot="logo"
+          thumbnail={umbcLogo}
         ></calcite-navigation-logo>
-
-        <calcite-action 
+        {/* Authenticated User Badge & Logout Button */}
+        <div
           slot="content-end"
-          icon="user"
-          text={currentUser?.username ? `User: ${currentUser.username}` : "Account"}
-          text-enabled
-        ></calcite-action>
-
-        <calcite-action 
-          slot="content-end"
-          icon="sign-out"
-          text="Log Out"
-          text-enabled
-          onClick={handleLogout}
-        ></calcite-action>
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            padding: "0.25rem 0.75rem"
+          }}
+        >
+          <button
+            onClick={handlePastInspectionReports}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.35rem",
+              padding: "0.25rem 0.6rem",
+              backgroundColor: "#262626",
+              color: "#e5e5e5",
+              borderRadius: "0.5rem",
+              border: "1px solid #404040",
+              fontSize: "0.75rem",
+              cursor: "pointer"
+            }}
+            title="Sign out of UMBC Stormwater session"
+          >
+            <span>View Past Inspection Reports</span>
+          </button>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              backgroundColor: "#1a1a1a",
+              padding: "0.25rem 0.6rem",
+              borderRadius: "0.5rem",
+              border: "1px solid #333333",
+              fontSize: "0.75rem"
+            }}
+          >
+            <span
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "9999px",
+                backgroundColor: "#22c55e"
+              }}
+            ></span>
+            <span style={{ color: "#ffc20e", fontWeight: "600" }}>
+              {currentUser.username}
+            </span>
+          </div>
+          <button
+            onClick={handleLogout}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.35rem",
+              padding: "0.25rem 0.6rem",
+              backgroundColor: "#262626",
+              color: "#e5e5e5",
+              borderRadius: "0.5rem",
+              border: "1px solid #404040",
+              fontSize: "0.75rem",
+              cursor: "pointer"
+            }}
+            title="Sign out of UMBC Stormwater session"
+          >
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: "14px" }}
+            >
+              logout
+            </span>
+            <span>Sign Out</span>
+          </button>
+        </div>
       </calcite-navigation>
-
       {/* The Map component fits to the size of the parent element  */}
       {/* The basemap, extent, zoom and more are provided by the Web Map (item-id) */}
+      {/* Note: popup-component-enabled enables the Popup component (beta). See https://developers.arcgis.com/javascript/latest/references/map-components/components/arcgis-map/#popupComponentEnabled for details. */}
       <arcgis-map
         item-id="764b68e81e2449fd87136908af258c24"
         popup-component-enabled
@@ -160,6 +233,7 @@ export function App() {
         <arcgis-expand slot="top-right">
           <arcgis-legend></arcgis-legend>
         </arcgis-expand>
+        {/*  A Feature Layer in the Web Map has an associated chart (layer-item-id) */}
       </arcgis-map>
     </calcite-shell>
   )
