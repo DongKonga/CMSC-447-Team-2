@@ -60,35 +60,21 @@ export function App() {
     await map.loadAll()
 
     const bmpLayer = map.allLayers.find((layer) => layer.title === "BMP Database")
+    const bmpLayerIcons = map.allLayers.find((layer) => layer.title === "BMP Database - Icons")
 
-    if (bmpLayer) {
+    if (bmpLayer && bmpLayerIcons) {
 
       bmpLayer.popupTemplate = new PopupTemplate({
         title: bmpLayer.popupTemplate?.title || "{BMP ID}",
         content: bmpLayer.popupTemplate?.content || "{*}"
       })
 
-      // Create Popup Buttons
-      const workOrderButtonContent = new CustomContent({
-        creator: (event) => {
-          const graphic = event.graphic || event
-          const attributes = graphic.attributes || {}
-
-          const button = document.createElement("calcite-button")
-          button.textContent = "Create Work Order"
-          button.width = "full"
-          button.scale = "m"
-          button.appearance = "solid"
-          button.style.marginTop = "12px"
-
-          button.addEventListener("click", () => {
-            alert("TODO: Redirect to work order template")
-          })
-
-          return button
-        },
+      bmpLayerIcons.popupTemplate = new PopupTemplate({
+        title: bmpLayerIcons.popupTemplate?.title || "{BMP ID}",
+        content: bmpLayerIcons.popupTemplate?.content || "{*}"
       })
 
+      // Create Popup Buttons
       const inspectionReportButtonContent = new CustomContent({
         creator: (event) => {
           const graphic = event.graphic || event
@@ -100,6 +86,7 @@ export function App() {
           button.scale = "l"
           button.appearance = "solid"
           button.style.marginTop = "12px"
+          button.style.setProperty("--calcite-font-weight-normal", "bold")
 
           button.addEventListener("click", () => {
             alert("TODO: Redirect to inspection report template")
@@ -109,14 +96,17 @@ export function App() {
         },
       })
 
-      if (Array.isArray(bmpLayer.popupTemplate.content)) {
+      if (Array.isArray(bmpLayer.popupTemplate.content) && Array.isArray(bmpLayerIcons.popupTemplate.content)) {
         bmpLayer.popupTemplate.content.push(inspectionReportButtonContent)
-        bmpLayer.popupTemplate.content.push(workOrderButtonContent)
+        bmpLayerIcons.popupTemplate.content.push(inspectionReportButtonContent)
       } else {
         bmpLayer.popupTemplate.content = [
           { type: "fields" },
-          inspectionReportButtonContent,
-          workOrderButtonContent
+          inspectionReportButtonContent
+        ]
+        bmpLayerIcons.popupTemplate.content = [
+          { type: "fields" },
+          inspectionReportButtonContent
         ]
       }
     } else {
@@ -127,6 +117,10 @@ export function App() {
   const handleLogout = () => {
     authService.logout()
     setCurrentUser(null)
+  }
+
+  const handlePastInspectionReports = () => {
+    alert("TODO: Redirect to to past inspection reports")
   }
 
   if (!currentUser) {
@@ -148,19 +142,9 @@ export function App() {
           slot="logo"
           thumbnail={umbcLogo}
         ></calcite-navigation-logo>
-
-        <calcite-action 
-          slot="content-end"
-          icon="user"
-          text="Account"
-          text-enabled
-          onClick={() => {
-            alert("TODO: Account info dropdown")
-          }}
-        ></calcite-action>
         {/* Authenticated User Badge & Logout Button */}
         <div
-          slot="navigation-actions"
+          slot="content-end"
           style={{
             display: "flex",
             alignItems: "center",
@@ -168,6 +152,24 @@ export function App() {
             padding: "0.25rem 0.75rem"
           }}
         >
+          <button
+            onClick={handlePastInspectionReports}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.35rem",
+              padding: "0.25rem 0.6rem",
+              backgroundColor: "#262626",
+              color: "#e5e5e5",
+              borderRadius: "0.5rem",
+              border: "1px solid #404040",
+              fontSize: "0.75rem",
+              cursor: "pointer"
+            }}
+            title="Sign out of UMBC Stormwater session"
+          >
+            <span>View Past Inspection Reports</span>
+          </button>
           <div
             style={{
               display: "flex",
