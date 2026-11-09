@@ -59,26 +59,6 @@ export function App() {
     )
 
     // Create Popup Buttons
-    const workOrderButtonContent = new CustomContent({
-      creator: (event) => {
-        const graphic = event.graphic || event
-        const attributes = graphic.attributes || {}
-
-        const button = document.createElement("calcite-button")
-        button.textContent = "Create Work Order"
-        button.width = "full"
-        button.scale = "m"
-        button.appearance = "solid"
-        button.style.marginTop = "12px"
-
-        button.addEventListener("click", () => {
-          alert("TODO: Redirect to work order template")
-        })
-
-        return button
-      },
-    })
-
     const inspectionReportButtonContent = new CustomContent({
       creator: (event) => {
         const graphic = event.graphic || event
@@ -90,6 +70,7 @@ export function App() {
         button.scale = "l"
         button.appearance = "solid"
         button.style.marginTop = "12px"
+        button.style.setProperty("--calcite-font-weight-normal", "bold")
 
         button.addEventListener("click", () => {
           alert("TODO: Redirect to inspection report template")
@@ -109,12 +90,10 @@ export function App() {
 
       if (Array.isArray(layer.popupTemplate.content)) {
         layer.popupTemplate.content.push(inspectionReportButtonContent)
-        layer.popupTemplate.content.push(workOrderButtonContent)
       } else {
         layer.popupTemplate.content = [
           { type: "fields" },
           inspectionReportButtonContent,
-          workOrderButtonContent,
         ]
       }
     }
