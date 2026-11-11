@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { CHECKLIST_CATEGORIES, determineChecklistCategory } from "./checklistData";
 import { generateInspectionPDF } from "./pdfGenerator";
+import cblpPdfUrl from "../assets/CBLP BMP Checklists_v7_Verification_022023.pdf";
 import "./InspectionReport.css";
 
 export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
@@ -23,10 +24,10 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
     };
   });
 
-  // Active Category (default deduced from Facility_T, switchable by user)
-  const [selectedCategoryKey, setSelectedCategoryKey] = useState(() =>
-    determineChecklistCategory(bmpData?.Facility_T)
-  );
+  // Active CBLP Checklist is automatically determined from Facility_T
+  const selectedCategoryKey = determineChecklistCategory(bmpData?.Facility_T);
+  const activeCategory =
+    CHECKLIST_CATEGORIES[selectedCategoryKey] || CHECKLIST_CATEGORIES.vegetated;
 
   // Form State
   const [formData, setFormData] = useState({
@@ -42,8 +43,6 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [dispatchStatus, setDispatchStatus] = useState(null);
   const [saveStatus, setSaveStatus] = useState(null);
-
-  const activeCategory = CHECKLIST_CATEGORIES[selectedCategoryKey] || CHECKLIST_CATEGORIES.vegetated;
 
   // Toggle checklist checkbox
   const handleToggleItem = (itemText) => {
@@ -238,6 +237,13 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
               </div>
             </div>
 
+            <div className="metadata-field">
+              <label>Assigned CBLP Checklist</label>
+              <div className="metadata-val highlight-val">
+                {activeCategory.title} ({activeCategory.pdfPages})
+              </div>
+            </div>
+
             <div className="metadata-field editable-field">
               <label htmlFor="insp-date">Inspection Date</label>
               <input
@@ -264,36 +270,43 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
         </section>
 
         {/* ======================================================== */}
-        {/* 2. CATEGORY SELECTOR TABS                               */}
+        {/* 2. AUTOMATICALLY ASSIGNED CHECKLIST                      */}
         {/* ======================================================== */}
-        <section className="category-selector-card">
-          <div className="category-selector-title">
-            <span className="material-symbols-outlined">checklist</span>
-            <span>Select Checklist Category (PDF Standard)</span>
+        <section className="auto-checklist-card">
+          <div className="auto-checklist-left">
+            <div className="auto-badge-row">
+              <span className="auto-badge">
+                <span className="material-symbols-outlined">auto_awesome</span>
+                <span>Auto-Selected From Facility Type</span>
+              </span>
+              <span className="pdf-badge">
+                <span className="material-symbols-outlined">picture_as_pdf</span>
+                <span>CBLP Standard: {activeCategory.pdfPages}</span>
+              </span>
+            </div>
+            <h2 className="auto-checklist-title">{activeCategory.title} Checklist</h2>
+            <p className="auto-checklist-subtitle">{activeCategory.subtitle}</p>
           </div>
-          <p className="category-selector-hint">
-            Category automatically matched from Facility Type. You can switch to any CBLP
-            checklist below:
-          </p>
 
-          <div className="category-tabs">
-            {Object.values(CHECKLIST_CATEGORIES).map((cat) => {
-              const isSelected = selectedCategoryKey === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  className={`category-tab-btn ${isSelected ? "active" : ""}`}
-                  onClick={() => setSelectedCategoryKey(cat.id)}
-                >
-                  <div className="tab-title-row">
-                    <span className="tab-title">{cat.title}</span>
-                    <span className="tab-pages-badge">{cat.pdfPages}</span>
-                  </div>
-                  <span className="tab-subtitle">{cat.subtitle}</span>
-                </button>
-              );
-            })}
+          <div className="auto-checklist-right">
+            <div className="mapping-info-box">
+              <span className="mapping-label">Mapped from Facility Type</span>
+              <span className="mapping-facility">
+                {bmpData.Facility_T || "Standard Practice"}
+              </span>
+            </div>
+            {cblpPdfUrl && (
+              <a
+                href={cblpPdfUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="view-ref-btn"
+                title="View original CBLP PDF checklist in new tab"
+              >
+                <span className="material-symbols-outlined">open_in_new</span>
+                <span>View Original CBLP PDF</span>
+              </a>
+            )}
           </div>
         </section>
 
@@ -302,8 +315,11 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
         {/* ======================================================== */}
         <section className="checklist-components-section">
           <div className="section-title-wrap">
-            <h2>{activeCategory.title} Inspection Checklist</h2>
-            <p>{activeCategory.subtitle}</p>
+            <h2>Field Observations & Verification Checklist</h2>
+            <p>
+              Inspection items tailored to {bmpData.Facility_T || "this practice"}. Check any
+              observed deficiencies and record component-specific notes.
+            </p>
           </div>
 
           <div className="components-list">

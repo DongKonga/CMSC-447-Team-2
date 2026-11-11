@@ -213,21 +213,48 @@ export const CHECKLIST_CATEGORIES = {
 };
 
 /**
- * Determine the default checklist category from a BMP facility type string.
+ * Automatically determine the CBLP checklist category based on the BMP facility type.
+ * Maps all 16 UMBC stormwater facility types directly to the 4 CBLP checklist templates.
+ *
+ * @param {string} facilityType - e.g. "Micro-Bioretention", "Porous Pavement", etc.
+ * @returns {"vegetated" | "permeable" | "rainwater" | "vegetated_roof"}
  */
 export function determineChecklistCategory(facilityType = "") {
-  const ft = (facilityType || "").toLowerCase();
+  const ft = (facilityType || "").toLowerCase().trim();
 
-  if (ft.includes("permeable") || ft.includes("porous") || ft.includes("pavement") || ft.includes("paver")) {
+  // 1. Permeable Pavement (Pages 4–5): Porous Pavement, Permeable Concrete/Asphalt, Pavers
+  if (
+    ft.includes("permeable") ||
+    ft.includes("porous") ||
+    ft.includes("pavement") ||
+    ft.includes("paver")
+  ) {
     return "permeable";
   }
-  if (ft.includes("rainwater") || ft.includes("tank") || ft.includes("cistern") || ft.includes("harvest")) {
+
+  // 2. Rainwater Harvesting (Pages 6–7): Storage Tanks, Cisterns
+  if (
+    ft.includes("rainwater") ||
+    ft.includes("tank") ||
+    ft.includes("cistern") ||
+    ft.includes("harvest")
+  ) {
     return "rainwater";
   }
-  if (ft.includes("green roof") || ft.includes("vegetated roof") || ft.includes("roof")) {
+
+  // 3. Vegetated Roofs (Pages 8–9): Green Roof, Vegetated Roof
+  // (Exclude "nonrooftop" so NonRooftop Disconnection doesn't match!)
+  if (
+    (ft.includes("green roof") || ft.includes("vegetated roof") || ft.includes("roof")) &&
+    !ft.includes("nonrooftop") &&
+    !ft.includes("non-rooftop")
+  ) {
     return "vegetated_roof";
   }
 
-  // Default for bioretention, swales, wetlands, ponds, basins, filters
+  // 4. Vegetated Practices (Pages 1–3):
+  // Micro-Bioretention, Bioretention, Rain Gardens, Wet Swales, Grass Swales,
+  // Submerged Gravel Wetland, NonRooftop Disconnection, Detention/Retention Ponds,
+  // Wet Ponds, Sediment Basins, Surface/Underground Sand Filters.
   return "vegetated";
 }

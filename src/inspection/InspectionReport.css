@@ -218,85 +218,142 @@
 }
 
 /* ======================================================== */
-/* 2. CATEGORY SELECTOR TABS                                */
+/* 2. AUTOMATICALLY ASSIGNED CHECKLIST                      */
 /* ======================================================== */
-.category-selector-card {
-  background-color: #0f172a;
-  border: 1px solid #1e293b;
-  border-radius: 12px;
-  padding: 20px 24px;
-}
-
-.category-selector-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 4px;
-}
-
-.category-selector-hint {
-  font-size: 13px;
-  color: #94a3b8;
-  margin: 0 0 16px;
-}
-
-.category-tabs {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 12px;
-}
-
-.category-tab-btn {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-  background-color: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 10px;
-  padding: 14px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.category-tab-btn:hover {
-  background-color: #273549;
-  border-color: #475569;
-}
-
-.category-tab-btn.active {
-  background-color: rgba(255, 194, 14, 0.1);
-  border-color: #ffc20e;
-  box-shadow: 0 0 0 1px #ffc20e;
-}
-
-.tab-title-row {
+.auto-checklist-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 24px;
+  background: linear-gradient(135deg, #0f172a 0%, #172554 100%);
+  border: 1px solid #1e3a8a;
+  border-left: 5px solid #38bdf8;
+  border-radius: 12px;
+  padding: 22px 28px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-.tab-title {
+.auto-checklist-left {
+  flex: 1;
+}
+
+.auto-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.auto-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.auto-badge .material-symbols-outlined {
+  font-size: 15px;
+}
+
+.pdf-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: rgba(255, 194, 14, 0.15);
+  color: #ffc20e;
+  border: 1px solid rgba(255, 194, 14, 0.35);
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pdf-badge .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.auto-checklist-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 6px;
+  letter-spacing: -0.3px;
+}
+
+.auto-checklist-subtitle {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.auto-checklist-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.mapping-info-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background-color: rgba(15, 23, 42, 0.6);
+  border: 1px solid #1e293b;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.mapping-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.mapping-facility {
   font-size: 14px;
   font-weight: 700;
+  color: #38bdf8;
+}
+
+.view-ref-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #1e293b;
+  color: #cbd5e1;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.view-ref-btn:hover {
+  background-color: #334155;
   color: #ffffff;
+  border-color: #475569;
 }
 
-.category-tab-btn.active .tab-title {
-  color: #ffc20e;
+.view-ref-btn .material-symbols-outlined {
+  font-size: 15px;
 }
 
-.tab-pages-badge {
-  font-size: 10px;
+.highlight-val {
+  color: #38bdf8;
   font-weight: 700;
-  background-color: #0f172a;
-  color: #94a3b8;
-  padding: 2px 6px;
-  border-radius: 4px;
 }
 
 .tab-subtitle {
