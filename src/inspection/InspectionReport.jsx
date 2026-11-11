@@ -64,6 +64,8 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
       // 2. Observations & Checklist Deficiencies
       checkedItems: {},
       observations: {},
+      verificationChecks: {},
+      verificationNotes: {},
 
       // 3. Verification Determination
       verificationStatus: "functioning",
@@ -189,6 +191,28 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
     }));
   };
 
+  // Toggle component plan verification checkbox
+  const handleToggleVerificationCheck = (id) => {
+    setFormData((prev) => ({
+      ...prev,
+      verificationChecks: {
+        ...prev.verificationChecks,
+        [id]: !prev.verificationChecks?.[id],
+      },
+    }));
+  };
+
+  // Change component plan verification notes
+  const handleVerificationNoteChange = (id, text) => {
+    setFormData((prev) => ({
+      ...prev,
+      verificationNotes: {
+        ...prev.verificationNotes,
+        [id]: text,
+      },
+    }));
+  };
+
   // Export to PDF using pdf-lib
   const handleExportPDF = async () => {
     setIsExportingPdf(true);
@@ -233,6 +257,8 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
       photos: photos.map((p) => ({ name: p.name, caption: p.caption })),
       checkedItems: formData.checkedItems,
       observations: formData.observations,
+      verificationChecks: formData.verificationChecks,
+      verificationNotes: formData.verificationNotes,
       actionNotes: formData.actionNotes,
       generalNotes: formData.generalNotes,
       savedAt: new Date().toISOString(),
@@ -741,6 +767,52 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
                     className="observation-textarea"
                   ></textarea>
                 </div>
+
+                {comp.verifications && comp.verifications.length > 0 && (
+                  <div className="component-verification-box">
+                    <div className="verif-box-header">
+                      <div className="verif-box-title">
+                        <span className="material-symbols-outlined verif-icon">verified</span>
+                        <span>VERIFICATION</span>
+                      </div>
+                      <span className="verif-box-subtitle">
+                        NOTE: Shaded cells to be used for BMP verification
+                      </span>
+                    </div>
+
+                    <div className="verif-items-list">
+                      {comp.verifications.map((v) => {
+                        const isChecked = !!formData.verificationChecks?.[v.id];
+                        return (
+                          <div key={v.id} className="verif-item-block">
+                            <label className={`verif-check-row ${isChecked ? "is-verified" : ""}`}>
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => handleToggleVerificationCheck(v.id)}
+                                className="verif-checkbox"
+                              />
+                              <span className="verif-check-label">{v.label}</span>
+                            </label>
+
+                            <div className="verif-note-wrap">
+                              <span className="verif-note-label">
+                                {v.notePrompt || "If different from plan, note how it is different:"}
+                              </span>
+                              <input
+                                type="text"
+                                value={formData.verificationNotes?.[v.id] || ""}
+                                onChange={(e) => handleVerificationNoteChange(v.id, e.target.value)}
+                                placeholder="Note conformity or differences from plan..."
+                                className="verif-note-input"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -751,7 +823,7 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
         {/* ======================================================== */}
         <section className="verification-card">
           <div className="verification-header">
-            <span className="material-symbols-outlined text-amber-400">verified</span>
+            <span className="material-symbols-outlined text-sky-400">verified</span>
             <div>
               <h3>Final Verification Determination</h3>
               <p>Official CBLP Pollutant Removal Function Assessment</p>
@@ -802,7 +874,7 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
                 className="verif-radio"
               />
               <div className="verif-label-wrap">
-                <span className="verif-title text-red-400">
+                <span className="verif-title">
                   BMP requires corrective or preventative maintenance or rehabilitation to
                   maintain its function for pollutant removal. Actions to be completed within
                   one year.
@@ -830,7 +902,7 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
                 className="verif-radio"
               />
               <div className="verif-label-wrap">
-                <span className="verif-title text-red-400">
+                <span className="verif-title">
                   BMP recommended to be downgraded for pollutant removal.
                 </span>
                 <span className="verif-desc">
@@ -845,7 +917,7 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
           {isMaintenanceAlert && (
             <div className="action-notes-card">
               <label htmlFor="action-notes">
-                <span className="material-symbols-outlined text-red-400">construction</span>
+                <span className="material-symbols-outlined text-sky-400">construction</span>
                 <span>Actions to be completed within one year / Downgrade Rationale:</span>
               </label>
               <textarea

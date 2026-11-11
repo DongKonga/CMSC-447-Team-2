@@ -17,14 +17,14 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const fontOblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
 
-  // Palette
-  const colorDark = rgb(0.04, 0.06, 0.1); // #0b0f19
-  const colorGold = rgb(1.0, 0.76, 0.05); // #ffc20e
-  const colorGray = rgb(0.39, 0.45, 0.55); // #64748b
-  const colorLightGray = rgb(0.94, 0.96, 0.98); // #f1f5f9
-  const colorBorder = rgb(0.8, 0.84, 0.9);
-  const colorAlertRed = rgb(0.85, 0.15, 0.15);
-  const colorSuccessGreen = rgb(0.1, 0.6, 0.25);
+  // Executive Navy & Slate Palette (Option A: Streamlined, Professional & Cohesive)
+  const colorNavy = rgb(0.06, 0.13, 0.24); // #0f223d - Deep Executive Navy
+  const colorNavyLight = rgb(0.12, 0.2, 0.32); // #1f3352 - Slate Navy for component headers
+  const colorDark = rgb(0.08, 0.11, 0.15); // #141c26 - Crisp Charcoal Body Text
+  const colorGray = rgb(0.4, 0.46, 0.54); // #66758a - Slate Gray for Secondary Labels
+  const colorLightGray = rgb(0.95, 0.97, 0.99); // #f2f5f9 - Clean Card Tint
+  const colorBorder = rgb(0.8, 0.85, 0.91); // #ccd9e8 - Subtle Slate Border
+  const colorWhite = rgb(1, 1, 1);
 
   let page = pdfDoc.addPage([612, 792]); // Letter size
   const { width, height } = page.getSize();
@@ -61,16 +61,14 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
   }
 
   // ==========================================
-  // DOCUMENT HEADER
+  // DOCUMENT HEADER (Executive Navy Banner)
   // ==========================================
   page.drawRectangle({
     x: margin,
     y: y - 52,
     width: contentWidth,
     height: 52,
-    color: colorDark,
-    borderColor: colorGold,
-    borderWidth: 1.5,
+    color: colorNavy,
   });
 
   page.drawText("STORMWATER BMP INSPECTION REPORT", {
@@ -78,7 +76,7 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
     y: y - 22,
     size: 15,
     font: fontBold,
-    color: colorGold,
+    color: colorWhite,
   });
 
   page.drawText("Chesapeake Bay Landscape Professional (CBLP) Verification Standard", {
@@ -86,7 +84,7 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
     y: y - 40,
     size: 9,
     font: fontRegular,
-    color: rgb(0.9, 0.95, 1.0),
+    color: rgb(0.88, 0.93, 0.99),
   });
 
   y -= 66;
@@ -138,7 +136,7 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
     y: y - 34,
     size: 8.5,
     font: fontBold,
-    color: formData.isBmpPresent === "NO" ? colorAlertRed : colorSuccessGreen,
+    color: colorDark,
   });
 
   // Row 3: BMP Practice Classification | Facility Type
@@ -189,7 +187,7 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
       y: y - 18,
       width: contentWidth,
       height: 18,
-      color: rgb(0.12, 0.18, 0.28),
+      color: colorNavyLight,
     });
 
     page.drawText(comp.name.toUpperCase(), {
@@ -197,7 +195,7 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
       y: y - 13,
       size: 9.5,
       font: fontBold,
-      color: rgb(1, 1, 1),
+      color: colorWhite,
     });
     y -= 26;
 
@@ -212,9 +210,9 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
         y: y - 9,
         width: 10,
         height: 10,
-        borderColor: isChecked ? colorAlertRed : colorGray,
+        borderColor: isChecked ? colorNavy : colorGray,
         borderWidth: 1,
-        color: isChecked ? rgb(1, 0.9, 0.9) : rgb(1, 1, 1),
+        color: isChecked ? rgb(0.92, 0.95, 0.99) : colorWhite,
       });
 
       if (isChecked) {
@@ -223,7 +221,7 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
           y: y - 8,
           size: 8,
           font: fontBold,
-          color: colorAlertRed,
+          color: colorNavy,
         });
       }
 
@@ -231,8 +229,8 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
         x: margin + 26,
         y: y - 8,
         size: 8.5,
-        font: fontRegular,
-        color: isChecked ? colorAlertRed : colorDark,
+        font: isChecked ? fontBold : fontRegular,
+        color: colorDark,
       });
 
       y -= 14;
@@ -252,6 +250,81 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
       y -= 14;
     }
 
+    // Component Plan Verification (Shaded Box matching CBLP PDF standard)
+    if (comp.verifications && comp.verifications.length > 0) {
+      for (const v of comp.verifications) {
+        checkPageSpace(32);
+        const isVerifChecked = formData.verificationChecks && formData.verificationChecks[v.id];
+        const verifNote = formData.verificationNotes && formData.verificationNotes[v.id];
+
+        // Shaded background box (matching CBLP shaded verification column)
+        page.drawRectangle({
+          x: margin + 10,
+          y: y - 26,
+          width: contentWidth - 20,
+          height: 26,
+          color: rgb(0.93, 0.95, 0.98),
+          borderColor: colorBorder,
+          borderWidth: 0.8,
+        });
+
+        // "VERIFICATION" header tag
+        page.drawText("VERIFICATION", {
+          x: margin + 16,
+          y: y - 11,
+          size: 7.5,
+          font: fontBold,
+          color: colorNavy,
+        });
+
+        // Verification checkbox box
+        page.drawRectangle({
+          x: margin + 85,
+          y: y - 13,
+          width: 9,
+          height: 9,
+          borderColor: isVerifChecked ? colorNavy : colorDark,
+          borderWidth: 1,
+          color: isVerifChecked ? rgb(0.9, 0.94, 0.98) : colorWhite,
+        });
+
+        if (isVerifChecked) {
+          page.drawText("X", {
+            x: margin + 86.5,
+            y: y - 12,
+            size: 7.5,
+            font: fontBold,
+            color: colorNavy,
+          });
+        }
+
+        // Verification label
+        const displayLabel = v.label.length > 70 ? v.label.substring(0, 68) + "..." : v.label;
+        page.drawText(displayLabel, {
+          x: margin + 98,
+          y: y - 11,
+          size: 7.5,
+          font: fontBold,
+          color: colorDark,
+        });
+
+        // Discrepancy / conformity notes line
+        const noteText = verifNote && verifNote.trim()
+          ? `${v.notePrompt} ${verifNote.trim()}`
+          : `${v.notePrompt} (Conforms to plan)`;
+        const displayNote = noteText.length > 95 ? noteText.substring(0, 92) + "..." : noteText;
+        page.drawText(displayNote, {
+          x: margin + 16,
+          y: y - 22,
+          size: 7,
+          font: fontOblique,
+          color: colorGray,
+        });
+
+        y -= 30;
+      }
+    }
+
     y -= 6;
   }
 
@@ -265,7 +338,7 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
     y: y - 22,
     width: contentWidth,
     height: 22,
-    color: colorDark,
+    color: colorNavy,
   });
 
   page.drawText("VERIFICATION DETERMINATION", {
@@ -273,7 +346,7 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
     y: y - 15,
     size: 10.5,
     font: fontBold,
-    color: colorGold,
+    color: colorWhite,
   });
 
   y -= 32;
@@ -304,17 +377,17 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
       x: margin + 15,
       y: y - 3,
       size: 5,
-      borderColor: isSelected ? (v.isAlert ? colorAlertRed : colorSuccessGreen) : colorGray,
+      borderColor: isSelected ? colorNavy : colorGray,
       borderWidth: 1.2,
-      color: isSelected ? (v.isAlert ? colorAlertRed : colorSuccessGreen) : rgb(1, 1, 1),
+      color: isSelected ? colorNavy : colorWhite,
     });
 
     if (isSelected) {
       page.drawCircle({
         x: margin + 15,
         y: y - 3,
-        size: 2.2,
-        color: rgb(1, 1, 1),
+        size: 2,
+        color: colorWhite,
       });
     }
 
@@ -323,7 +396,7 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
       y: y - 6,
       size: 8.5,
       font: isSelected ? fontBold : fontRegular,
-      color: isSelected ? (v.isAlert ? colorAlertRed : colorSuccessGreen) : colorDark,
+      color: colorDark,
     });
 
     y -= 20;
@@ -337,8 +410,8 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
       y: y - 28,
       width: contentWidth,
       height: 28,
-      color: rgb(1, 0.95, 0.9),
-      borderColor: colorAlertRed,
+      color: rgb(0.95, 0.97, 0.99),
+      borderColor: colorBorder,
       borderWidth: 1,
     });
 
@@ -347,7 +420,7 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
       y: y - 12,
       size: 8,
       font: fontBold,
-      color: colorAlertRed,
+      color: colorNavy,
     });
     page.drawText(`${formData.actionNotes.trim()}`, {
       x: margin + 8,
@@ -416,16 +489,14 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
       y: photoY - 44,
       width: contentWidth,
       height: 44,
-      color: colorDark,
-      borderColor: colorGold,
-      borderWidth: 1,
+      color: colorNavy,
     });
     photoPage.drawText("SITE INSPECTION PHOTOGRAPHIC LOG", {
       x: margin + 14,
       y: photoY - 20,
       size: 13,
       font: fontBold,
-      color: colorGold,
+      color: colorWhite,
     });
     photoPage.drawText(
       `Facility: ${bmpData.BMP_ID || "N/A"} (${bmpData.Facility_T || "Stormwater BMP"}) — Total Attached Photos: ${photos.length}`,
@@ -434,7 +505,7 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
         y: photoY - 34,
         size: 8.5,
         font: fontRegular,
-        color: rgb(0.9, 0.95, 1.0),
+        color: rgb(0.88, 0.93, 0.99),
       }
     );
     photoY -= 60;
@@ -537,7 +608,7 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
           y: currentY - imgMaxH / 2,
           size: 8.5,
           font: fontBold,
-          color: colorAlertRed,
+          color: colorGray,
         });
       }
     }

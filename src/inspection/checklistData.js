@@ -19,6 +19,13 @@ export const CHECKLIST_CATEGORIES = {
           "Chemicals, oil, or automotive fluids observed",
         ],
         observationPrompt: "Drainage area observations & plan conformity notes:",
+        verifications: [
+          {
+            id: "veg_drainage_conforms",
+            label: "Drainage area conforms to plan?",
+            notePrompt: "If different from plan, note how it is different:",
+          },
+        ],
       },
       {
         name: "Inlets to Practice",
@@ -50,6 +57,23 @@ export const CHECKLIST_CATEGORIES = {
           "Mulch floating, washed away, or excessively matted",
         ],
         observationPrompt: "Ponding depth, mulch condition, and surface infiltration notes:",
+        verifications: [
+          {
+            id: "veg_surface_area_conforms",
+            label: "Surface area conforms to plan?",
+            notePrompt: "If different from plan, note how it is different:",
+          },
+          {
+            id: "veg_ponding_depth_conforms",
+            label: "Ponding depth conforms to plan?",
+            notePrompt: "If different from plan, note how it is different:",
+          },
+          {
+            id: "veg_soil_media_conforms",
+            label: "Soil media appears to conform to plan?",
+            notePrompt: "If different from plan, note how it is different:",
+          },
+        ],
       },
       {
         name: "Vegetation Health & Coverage",
@@ -61,6 +85,13 @@ export const CHECKLIST_CATEGORIES = {
           "Pruning, trimming, or seasonal cutback required",
         ],
         observationPrompt: "Dominant plant species, weed types, and replanting recommendations:",
+        verifications: [
+          {
+            id: "veg_vegetation_conforms",
+            label: "Vegetation generally conforms to plan OR vegetative cover is adequate?",
+            notePrompt: "If different from plan, note how it is different:",
+          },
+        ],
       },
       {
         name: "Outlets & Overflow Structures",
@@ -91,6 +122,13 @@ export const CHECKLIST_CATEGORIES = {
           "Run-on ratio exceeds plan specifications",
         ],
         observationPrompt: "Run-on sources and contributing area notes:",
+        verifications: [
+          {
+            id: "perm_drainage_conforms",
+            label: "Drainage area conforms to plan?",
+            notePrompt: "If different from plan, note how it is different:",
+          },
+        ],
       },
       {
         name: "Permeable Pavement Surface",
@@ -103,6 +141,13 @@ export const CHECKLIST_CATEGORIES = {
           "Joint material missing or eroded below recommended level",
         ],
         observationPrompt: "Pavement condition, void clogging, and vacuum sweeping needs:",
+        verifications: [
+          {
+            id: "perm_surface_functioning",
+            label: "Permeable surface functioning as designed?",
+            notePrompt: "If different from plan, note how it is different:",
+          },
+        ],
       },
       {
         name: "Overflow / Inlets / Underdrains",
@@ -131,6 +176,13 @@ export const CHECKLIST_CATEGORIES = {
           "Debris screens missing or damaged on downspouts",
         ],
         observationPrompt: "Roof catchment condition and gutter notes:",
+        verifications: [
+          {
+            id: "rain_roof_area_conforms",
+            label: "Contributing roof area conforms to plan?",
+            notePrompt: "If different from plan, note how it is different:",
+          },
+        ],
       },
       {
         name: "Pre-Treatment Filtration",
@@ -140,6 +192,13 @@ export const CHECKLIST_CATEGORIES = {
           "Filter mesh torn, clogged, or missing",
         ],
         observationPrompt: "First-flush diverter cleanout observations:",
+        verifications: [
+          {
+            id: "rain_pretreat_present",
+            label: "Pre-Treatment present and functioning?",
+            notePrompt: "If different from plan, note how it is different:",
+          },
+        ],
       },
       {
         name: "Tank / Cistern Structure",
@@ -151,6 +210,13 @@ export const CHECKLIST_CATEGORIES = {
           "Excessive algae growth or sediment buildup on tank bottom",
         ],
         observationPrompt: "Tank structural integrity, fittings, and sedimentation notes:",
+        verifications: [
+          {
+            id: "rain_tank_cistern_present",
+            label: "Tank/Cistern present, collecting water, and functioning properly?",
+            notePrompt: "If different from plan, note how it is different:",
+          },
+        ],
       },
       {
         name: "Drawdown, Pump & Overflow",
@@ -161,6 +227,13 @@ export const CHECKLIST_CATEGORIES = {
           "Drawdown or water reuse system non-operational",
         ],
         observationPrompt: "Pump operation, overflow stability, and reuse system notes:",
+        verifications: [
+          {
+            id: "rain_overflow_stable",
+            label: "Overflow stable?",
+            notePrompt: "If different from plan or is unstable, note the conditions:",
+          },
+        ],
       },
     ],
   },
@@ -178,6 +251,13 @@ export const CHECKLIST_CATEGORIES = {
           "Root barrier or waterproofing membrane exposure",
         ],
         observationPrompt: "Media depth, wind erosion, and system type notes:",
+        verifications: [
+          {
+            id: "roof_present",
+            label: "Vegetated roof present and functioning?",
+            notePrompt: "If different from plan, note how it is different:",
+          },
+        ],
       },
       {
         name: "Vegetation Coverage & Health",
@@ -188,6 +268,13 @@ export const CHECKLIST_CATEGORIES = {
           "Nutrient deficiency or excessive moss/algae growth",
         ],
         observationPrompt: "Plant health, percent coverage, and weeding needs:",
+        verifications: [
+          {
+            id: "roof_vegetation_conforms",
+            label: "Vegetation generally conforms to plan OR vegetative cover is adequate?",
+            notePrompt: "If different from plan, note how it is different:",
+          },
+        ],
       },
       {
         name: "Drains, Scuppers & Flashing",
@@ -198,6 +285,13 @@ export const CHECKLIST_CATEGORIES = {
           "Ponding water observed near drains > 24 hours post-storm",
         ],
         observationPrompt: "Drain box clearance and perimeter gravel strip notes:",
+        verifications: [
+          {
+            id: "roof_structural_intact",
+            label: "Structural components are intact and functioning properly.",
+            notePrompt: "Note deficiencies:",
+          },
+        ],
       },
       {
         name: "Irrigation & Leak Detection",
@@ -207,6 +301,13 @@ export const CHECKLIST_CATEGORIES = {
           "Evidence of ceiling leaks in building space below",
         ],
         observationPrompt: "Irrigation testing and building structural notes:",
+        verifications: [
+          {
+            id: "roof_irrigation_intact",
+            label: "Irrigation system intact and functioning properly.",
+            notePrompt: "Note deficiencies:",
+          },
+        ],
       },
     ],
   },
