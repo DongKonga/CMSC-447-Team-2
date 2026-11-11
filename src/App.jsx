@@ -121,6 +121,8 @@ export function App() {
     const setupLayerPopup = (layer) => {
       if (!layer) return
 
+      layer.outFields = ["*"]
+
       layer.popupTemplate = new PopupTemplate({
         title: layer.popupTemplate?.title || "{BMP ID}",
         content: layer.popupTemplate?.content || "{*}",

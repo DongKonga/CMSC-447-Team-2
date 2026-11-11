@@ -29,15 +29,48 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
   const activeCategory =
     CHECKLIST_CATEGORIES[selectedCategoryKey] || CHECKLIST_CATEGORIES.vegetated;
 
-  // Form State
-  const [formData, setFormData] = useState({
-    date: new Date().toISOString().split("T")[0],
-    inspectorName: currentUser?.username || "Inspector",
-    checkedItems: {},
-    observations: {},
-    verificationStatus: "functioning",
-    actionNotes: "",
-    generalNotes: "",
+  // Form State: Pre-populated with official CBLP Verification Header elements
+  const [formData, setFormData] = useState(() => {
+    // Extract service year from MDE SF number if available (e.g., "11-SF-0048" -> "2011", "13-SF-0142" -> "2013")
+    const mdeNum =
+      bmpData?.MDE_SF_Number || bmpData?.MDE_SF_Num || bmpData?.BMP_ID || "";
+    const yearMatch =
+      mdeNum.match(/^(\d{2})-SF/i) || mdeNum.match(/UMBC-(\d{2})-SF/i);
+    const serviceYear = yearMatch ? `20${yearMatch[1]}` : "";
+
+    const ft = (bmpData?.Facility_T || "").toLowerCase();
+    let initialBmpType = "New LID Practice";
+    if (ft.includes("pond") || ft.includes("basin")) {
+      initialBmpType = "Old Stormwater Practice";
+    }
+
+    const defaultProjectName = bmpData?.Facility_T
+      ? `${bmpData.Facility_T}${bmpData.Facility_N ? " #" + bmpData.Facility_N : ""} (${bmpData.BMP_ID || "UMBC"})`
+      : "UMBC Campus Stormwater Practice";
+
+    return {
+      // 1. Official CBLP Header Elements (Exact items from CBLP PDF standard)
+      date: new Date().toISOString().split("T")[0],
+      projectName: defaultProjectName,
+      planBmpNumber: bmpData?.BMP_ID || bmpData?.MDE_SF_Number || "N/A",
+      inspectionType: "Verification 1st Inspection for Permit Cycle",
+      bmpTypeClassification: initialBmpType,
+      placedInServiceDate: serviceYear,
+      siteAddress: "UMBC Campus, 1000 Hilltop Circle, Baltimore, MD 21250",
+      inspectorName: currentUser?.username || "Inspector",
+      inspectorCredentials: "CBLP Certified Professional",
+      photoNumbers: "",
+      isBmpPresent: "YES",
+
+      // 2. Observations & Checklist Deficiencies
+      checkedItems: {},
+      observations: {},
+
+      // 3. Verification Determination
+      verificationStatus: "functioning",
+      actionNotes: "",
+      generalNotes: "",
+    };
   });
 
   const [isExportingPdf, setIsExportingPdf] = useState(false);
@@ -194,77 +227,281 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
         )}
 
         {/* ======================================================== */}
-        {/* 1. AUTOPOPULATED BMP METADATA CARD                      */}
+        {/* 1. CBLP OFFICIAL VERIFICATION HEADER (FULL PDF STANDARD) */}
         {/* ======================================================== */}
-        <section className="metadata-card">
-          <div className="metadata-header">
-            <div className="metadata-badge">
-              <span className="material-symbols-outlined">layers</span>
-              <span>Autopopulated Stormwater Data</span>
+        <section className="cblp-header-card">
+          <div className="card-header-bar">
+            <div className="card-badge">
+              <span className="material-symbols-outlined">assignment</span>
+              <span>CBLP Verification Inspection Form</span>
             </div>
             <span className="bmp-id-tag">{bmpData.BMP_ID || "N/A"}</span>
           </div>
 
-          <div className="metadata-grid">
-            <div className="metadata-field">
-              <label>Facility Type</label>
-              <div className="metadata-val">{bmpData.Facility_T || "N/A"}</div>
+          <div className="cblp-form-body">
+            {/* Row 1: Identification */}
+            <div className="form-row three-cols">
+              <div className="form-field">
+                <label htmlFor="insp-date">Date of Inspection</label>
+                <input
+                  id="insp-date"
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  className="cblp-input"
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="proj-name">Project / BMP Name</label>
+                <input
+                  id="proj-name"
+                  type="text"
+                  value={formData.projectName}
+                  onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
+                  placeholder="e.g. Micro-Bioretention #02"
+                  className="cblp-input"
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="plan-num">Plan / BMP # (if applicable)</label>
+                <input
+                  id="plan-num"
+                  type="text"
+                  value={formData.planBmpNumber}
+                  onChange={(e) => setFormData({ ...formData, planBmpNumber: e.target.value })}
+                  placeholder="e.g. UMBC-11-SF-0048-02"
+                  className="cblp-input"
+                />
+              </div>
             </div>
 
-            <div className="metadata-field">
-              <label>Facility Name / No.</label>
-              <div className="metadata-val">{bmpData.Facility_N || "N/A"}</div>
+            {/* Row 2: Inspection Type & BMP Present */}
+            <div className="form-row two-cols">
+              <div className="form-field">
+                <label>Type of Inspection</label>
+                <div className="radio-pill-group">
+                  {[
+                    "Verification 1st Inspection for Permit Cycle",
+                    "Verification Re-Inspection To Confirm Corrective Actions",
+                  ].map((typeOption) => {
+                    const isSelected = formData.inspectionType === typeOption;
+                    return (
+                      <button
+                        key={typeOption}
+                        type="button"
+                        className={`radio-pill-btn ${isSelected ? "selected" : ""}`}
+                        onClick={() => setFormData({ ...formData, inspectionType: typeOption })}
+                      >
+                        <span className="pill-check-indicator">
+                          {isSelected ? "●" : "○"}
+                        </span>
+                        <span>{typeOption}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="form-field">
+                <label>Is BMP Still Present?</label>
+                <div className="presence-toggle-group">
+                  <button
+                    type="button"
+                    className={`presence-btn yes-btn ${formData.isBmpPresent === "YES" ? "active" : ""}`}
+                    onClick={() => setFormData({ ...formData, isBmpPresent: "YES" })}
+                  >
+                    <span className="material-symbols-outlined">check</span>
+                    <span>YES</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`presence-btn no-btn ${formData.isBmpPresent === "NO" ? "active" : ""}`}
+                    onClick={() => setFormData({ ...formData, isBmpPresent: "NO" })}
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                    <span>NO</span>
+                  </button>
+                </div>
+                {formData.isBmpPresent === "NO" && (
+                  <p className="presence-warning">
+                    ⚠️ BMP not found at site coordinates. Document conditions and reason below.
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div className="metadata-field">
-              <label>MDE SF Number</label>
-              <div className="metadata-val">
+            {/* Row 3: BMP Practice Classification (BMP Type in PDF) */}
+            <div className="form-row single-col">
+              <div className="form-field">
+                <label>BMP Type (CBLP Classification)</label>
+                <div className="radio-pill-group four-cols">
+                  {[
+                    "Stormwater Retrofit",
+                    "New LID Practice",
+                    "Old Stormwater Practice",
+                    "Homeowner BMP",
+                  ].map((bmpTypeOption) => {
+                    const isSelected = formData.bmpTypeClassification === bmpTypeOption;
+                    return (
+                      <button
+                        key={bmpTypeOption}
+                        type="button"
+                        className={`radio-pill-btn ${isSelected ? "selected" : ""}`}
+                        onClick={() =>
+                          setFormData({ ...formData, bmpTypeClassification: bmpTypeOption })
+                        }
+                      >
+                        <span className="pill-check-indicator">
+                          {isSelected ? "●" : "○"}
+                        </span>
+                        <span>{bmpTypeOption}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Row 4: Dates & Location */}
+            <div className="form-row two-cols">
+              <div className="form-field">
+                <label htmlFor="service-date">Date BMP Placed into Service</label>
+                <input
+                  id="service-date"
+                  type="text"
+                  value={formData.placedInServiceDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, placedInServiceDate: e.target.value })
+                  }
+                  placeholder="e.g. 2013 or MM/DD/YYYY"
+                  className="cblp-input"
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="site-addr">Site Address</label>
+                <input
+                  id="site-addr"
+                  type="text"
+                  value={formData.siteAddress}
+                  onChange={(e) => setFormData({ ...formData, siteAddress: e.target.value })}
+                  placeholder="Street Address, City, State ZIP"
+                  className="cblp-input"
+                />
+              </div>
+            </div>
+
+            {/* Row 5: Inspector Credentials & Photos */}
+            <div className="form-row three-cols">
+              <div className="form-field">
+                <label htmlFor="insp-name">Verification Inspector</label>
+                <input
+                  id="insp-name"
+                  type="text"
+                  value={formData.inspectorName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, inspectorName: e.target.value })
+                  }
+                  placeholder="Inspector Name"
+                  className="cblp-input"
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="insp-cred">Inspector Credential(s)</label>
+                <input
+                  id="insp-cred"
+                  type="text"
+                  value={formData.inspectorCredentials}
+                  onChange={(e) =>
+                    setFormData({ ...formData, inspectorCredentials: e.target.value })
+                  }
+                  placeholder="e.g. CBLP, PE, RLA"
+                  className="cblp-input"
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="site-photos">Photo #s Taken at Site</label>
+                <input
+                  id="site-photos"
+                  type="text"
+                  value={formData.photoNumbers}
+                  onChange={(e) =>
+                    setFormData({ ...formData, photoNumbers: e.target.value })
+                  }
+                  placeholder="e.g. IMG_0142, IMG_0143"
+                  className="cblp-input"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ======================================================== */}
+        {/* 2. AUTOPOPULATED GIS & ENGINEERING DATA                  */}
+        {/* ======================================================== */}
+        <section className="gis-metadata-card">
+          <div className="card-header-bar">
+            <div className="card-badge neutral-badge">
+              <span className="material-symbols-outlined">database</span>
+              <span>Autopopulated Stormwater GIS Layer Data</span>
+            </div>
+          </div>
+
+          <div className="gis-grid">
+            <div className="gis-item">
+              <span className="gis-label">Facility Type</span>
+              <span className="gis-val">{bmpData.Facility_T || "N/A"}</span>
+            </div>
+
+            <div className="gis-item">
+              <span className="gis-label">Facility Name / No.</span>
+              <span className="gis-val">{bmpData.Facility_N || "N/A"}</span>
+            </div>
+
+            <div className="gis-item">
+              <span className="gis-label">MDE State Permit SF #</span>
+              <span className="gis-val">
                 {bmpData.MDE_SF_Number || bmpData.MDE_SF_Num || "N/A"}
-              </div>
+              </span>
             </div>
 
-            <div className="metadata-field">
-              <label>Contributing Drainage Area</label>
-              <div className="metadata-val">
-                {bmpData.Drainage_A ? `${bmpData.Drainage_A.toLocaleString()} sq ft` : "N/A"}
-              </div>
+            <div className="gis-item">
+              <span className="gis-label">UMBC Project Ref (PRF)</span>
+              <span className="gis-val">{bmpData.UMBC_PRF || "N/A"}</span>
             </div>
 
-            <div className="metadata-field">
-              <label>ESD Volume (CF)</label>
-              <div className="metadata-val">
+            <div className="gis-item">
+              <span className="gis-label">Contributing Drainage Area</span>
+              <span className="gis-val">
+                {bmpData.Drainage_A
+                  ? `${bmpData.Drainage_A.toLocaleString()} sq ft`
+                  : "N/A"}
+              </span>
+            </div>
+
+            <div className="gis-item">
+              <span className="gis-label">ESD Volume (CF)</span>
+              <span className="gis-val">
                 {bmpData.ESDv__CF_ ? `${bmpData.ESDv__CF_.toLocaleString()} CF` : "N/A"}
-              </div>
+              </span>
             </div>
 
-            <div className="metadata-field">
-              <label>Assigned CBLP Checklist</label>
-              <div className="metadata-val highlight-val">
+            <div className="gis-item">
+              <span className="gis-label">Impervious Area Treated</span>
+              <span className="gis-val">
+                {bmpData.IAT__SF_ ? `${bmpData.IAT__SF_.toLocaleString()} sq ft` : "N/A"}
+              </span>
+            </div>
+
+            <div className="gis-item">
+              <span className="gis-label">Assigned CBLP Template</span>
+              <span className="gis-val highlight-val">
                 {activeCategory.title} ({activeCategory.pdfPages})
-              </div>
-            </div>
-
-            <div className="metadata-field editable-field">
-              <label htmlFor="insp-date">Inspection Date</label>
-              <input
-                id="insp-date"
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="metadata-input"
-              />
-            </div>
-
-            <div className="metadata-field editable-field">
-              <label htmlFor="insp-name">Certified Inspector</label>
-              <input
-                id="insp-name"
-                type="text"
-                value={formData.inspectorName}
-                onChange={(e) => setFormData({ ...formData, inspectorName: e.target.value })}
-                placeholder="Inspector Name"
-                className="metadata-input"
-              />
+              </span>
             </div>
           </div>
         </section>

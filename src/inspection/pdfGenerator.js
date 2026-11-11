@@ -91,9 +91,9 @@ export async function generateInspectionPDF({ bmpData, category, formData }) {
   y -= 66;
 
   // ==========================================
-  // AUTOPOPULATED BMP METADATA CARD
+  // CBLP VERIFICATION INSPECTION HEADER (PDF STANDARD)
   // ==========================================
-  page.drawText("BMP FACILITY METADATA (AUTOPROVIDE)", {
+  page.drawText("CBLP VERIFICATION INSPECTION DETAILS", {
     x: margin,
     y: y,
     size: 9,
@@ -102,52 +102,79 @@ export async function generateInspectionPDF({ bmpData, category, formData }) {
   });
   y -= 12;
 
-  const metaBoxHeight = 72;
+  const headerBoxHeight = 122;
   page.drawRectangle({
     x: margin,
-    y: y - metaBoxHeight,
+    y: y - headerBoxHeight,
     width: contentWidth,
-    height: metaBoxHeight,
+    height: headerBoxHeight,
     color: colorLightGray,
     borderColor: colorBorder,
     borderWidth: 1,
   });
 
-  const col1X = margin + 12;
-  const col2X = margin + 190;
-  const col3X = margin + 360;
+  const c1 = margin + 10;
+  const c2 = margin + 185;
+  const c3 = margin + 360;
 
-  // Row 1
-  page.drawText(`BMP ID:`, { x: col1X, y: y - 18, size: 8.5, font: fontBold, color: colorGray });
-  page.drawText(`${bmpData.BMP_ID || "N/A"}`, { x: col1X + 55, y: y - 18, size: 9, font: fontBold, color: colorDark });
+  // Row 1: Date of Inspection | Project/BMP Name | Plan/BMP #
+  page.drawText("Date of Inspection:", { x: c1, y: y - 16, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${formData.date || "N/A"}`, { x: c1 + 80, y: y - 16, size: 8.5, font: fontBold, color: colorDark });
 
-  page.drawText(`Facility Type:`, { x: col2X, y: y - 18, size: 8.5, font: fontBold, color: colorGray });
-  page.drawText(`${bmpData.Facility_T || "N/A"}`, { x: col2X + 68, y: y - 18, size: 9, font: fontRegular, color: colorDark });
+  page.drawText("Project / BMP Name:", { x: c2, y: y - 16, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${(formData.projectName || "N/A").slice(0, 24)}`, { x: c2 + 85, y: y - 16, size: 8.5, font: fontRegular, color: colorDark });
 
-  page.drawText(`Inspection Date:`, { x: col3X, y: y - 18, size: 8.5, font: fontBold, color: colorGray });
-  page.drawText(`${formData.date || new Date().toLocaleDateString()}`, { x: col3X + 78, y: y - 18, size: 9, font: fontBold, color: colorDark });
+  page.drawText("Plan / BMP #:", { x: c3, y: y - 16, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${formData.planBmpNumber || bmpData.BMP_ID || "N/A"}`, { x: c3 + 60, y: y - 16, size: 8.5, font: fontBold, color: colorDark });
 
-  // Row 2
-  page.drawText(`MDE SF #:`, { x: col1X, y: y - 36, size: 8.5, font: fontBold, color: colorGray });
-  page.drawText(`${bmpData.MDE_SF_Number || bmpData.MDE_SF_Num || "N/A"}`, { x: col1X + 55, y: y - 36, size: 9, font: fontRegular, color: colorDark });
+  // Row 2: Type of Inspection | Is BMP Still Present?
+  page.drawText("Type of Inspection:", { x: c1, y: y - 34, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`[X] ${(formData.inspectionType || "1st Inspection for Permit Cycle").slice(0, 40)}`, { x: c1 + 80, y: y - 34, size: 8, font: fontRegular, color: colorDark });
 
-  page.drawText(`Facility Name/No:`, { x: col2X, y: y - 36, size: 8.5, font: fontBold, color: colorGray });
-  page.drawText(`${bmpData.Facility_N || "N/A"}`, { x: col2X + 80, y: y - 36, size: 9, font: fontRegular, color: colorDark });
+  page.drawText("Is BMP Present?", { x: c3, y: y - 34, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`[${formData.isBmpPresent === "YES" ? "X" : " "}] YES    [${formData.isBmpPresent === "NO" ? "X" : " "}] NO`, {
+    x: c3 + 70,
+    y: y - 34,
+    size: 8.5,
+    font: fontBold,
+    color: formData.isBmpPresent === "NO" ? colorAlertRed : colorSuccessGreen,
+  });
 
-  page.drawText(`Inspector:`, { x: col3X, y: y - 36, size: 8.5, font: fontBold, color: colorGray });
-  page.drawText(`${formData.inspectorName || "Inspector"}`, { x: col3X + 78, y: y - 36, size: 9, font: fontRegular, color: colorDark });
+  // Row 3: BMP Practice Classification | Facility Type
+  page.drawText("BMP Type (CBLP):", { x: c1, y: y - 52, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`[X] ${formData.bmpTypeClassification || "New LID Practice"}`, { x: c1 + 80, y: y - 52, size: 8.5, font: fontRegular, color: colorDark });
 
-  // Row 3
-  page.drawText(`Drainage Area:`, { x: col1X, y: y - 54, size: 8.5, font: fontBold, color: colorGray });
-  page.drawText(`${bmpData.Drainage_A ? `${bmpData.Drainage_A} sq ft` : "N/A"}`, { x: col1X + 75, y: y - 54, size: 9, font: fontRegular, color: colorDark });
+  page.drawText("Facility Type (GIS):", { x: c3, y: y - 52, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${bmpData.Facility_T || "N/A"}`, { x: c3 + 85, y: y - 52, size: 8.5, font: fontRegular, color: colorDark });
 
-  page.drawText(`ESD Volume:`, { x: col2X, y: y - 54, size: 8.5, font: fontBold, color: colorGray });
-  page.drawText(`${bmpData.ESDv__CF_ ? `${bmpData.ESDv__CF_} CF` : "N/A"}`, { x: col2X + 68, y: y - 54, size: 9, font: fontRegular, color: colorDark });
+  // Row 4: Placed in Service | Site Address
+  page.drawText("Placed in Service:", { x: c1, y: y - 70, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${formData.placedInServiceDate || "N/A"}`, { x: c1 + 80, y: y - 70, size: 8.5, font: fontRegular, color: colorDark });
 
-  page.drawText(`Checklist:`, { x: col3X, y: y - 54, size: 8.5, font: fontBold, color: colorGray });
-  page.drawText(`${category.title}`, { x: col3X + 78, y: y - 54, size: 9, font: fontBold, color: colorDark });
+  page.drawText("Site Address:", { x: c2, y: y - 70, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${(formData.siteAddress || "UMBC Campus, 1000 Hilltop Circle").slice(0, 45)}`, { x: c2 + 60, y: y - 70, size: 8.5, font: fontRegular, color: colorDark });
 
-  y -= metaBoxHeight + 18;
+  // Row 5: Inspector | Credential(s) | Photos
+  page.drawText("Inspector:", { x: c1, y: y - 88, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${formData.inspectorName || "Inspector"}`, { x: c1 + 80, y: y - 88, size: 8.5, font: fontRegular, color: colorDark });
+
+  page.drawText("Credential(s):", { x: c2, y: y - 88, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${formData.inspectorCredentials || "CBLP Professional"}`, { x: c2 + 65, y: y - 88, size: 8.5, font: fontRegular, color: colorDark });
+
+  page.drawText("Photos Taken:", { x: c3, y: y - 88, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${formData.photoNumbers || "None recorded"}`, { x: c3 + 65, y: y - 88, size: 8.5, font: fontRegular, color: colorDark });
+
+  // Row 6: MDE SF # | Drainage Area & ESD | Assigned Checklist
+  page.drawText("MDE Permit #:", { x: c1, y: y - 106, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${bmpData.MDE_SF_Number || bmpData.MDE_SF_Num || "N/A"}`, { x: c1 + 80, y: y - 106, size: 8.5, font: fontRegular, color: colorDark });
+
+  page.drawText("Drainage / ESD:", { x: c2, y: y - 106, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${bmpData.Drainage_A ? bmpData.Drainage_A.toLocaleString() + " sq ft" : "N/A"} | ${bmpData.ESDv__CF_ ? bmpData.ESDv__CF_ + " CF" : "N/A"}`, { x: c2 + 75, y: y - 106, size: 8.5, font: fontRegular, color: colorDark });
+
+  page.drawText("Checklist:", { x: c3, y: y - 106, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${category.title} (${category.pdfPages})`, { x: c3 + 50, y: y - 106, size: 8.5, font: fontBold, color: colorDark });
+
+  y -= headerBoxHeight + 18;
 
   // ==========================================
   // CHECKLIST COMPONENTS

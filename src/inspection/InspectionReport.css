@@ -139,34 +139,38 @@
 }
 
 /* ======================================================== */
-/* 1. METADATA CARD                                         */
+/* 1. CBLP HEADER CARD & FORM ELEMENTS                      */
 /* ======================================================== */
-.metadata-card {
+.cblp-header-card {
   background-color: #0f172a;
   border: 1px solid #1e293b;
   border-radius: 12px;
-  padding: 20px 24px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
 }
 
-.metadata-header {
+.card-header-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
   border-bottom: 1px solid #1e293b;
 }
 
-.metadata-badge {
+.card-badge {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #94a3b8;
+  color: #ffc20e;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.neutral-badge {
+  color: #38bdf8;
 }
 
 .bmp-id-tag {
@@ -180,14 +184,172 @@
   letter-spacing: 0.5px;
 }
 
-.metadata-grid {
+.cblp-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
 }
 
-.metadata-field label {
-  display: block;
+.form-row.three-cols {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.form-row.two-cols {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.form-row.single-col {
+  grid-template-columns: 1fr;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-field label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+}
+
+.cblp-input {
+  width: 100%;
+  padding: 9px 12px;
+  background-color: #0b0f19;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 13.5px;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.cblp-input:focus {
+  outline: none;
+  border-color: #ffc20e;
+  box-shadow: 0 0 0 1px #ffc20e;
+  background-color: #0e1526;
+}
+
+.radio-pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.radio-pill-group.four-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.radio-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 8px 14px;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.radio-pill-btn:hover {
+  background-color: #273549;
+  border-color: #475569;
+}
+
+.radio-pill-btn.selected {
+  background-color: rgba(255, 194, 14, 0.12);
+  border-color: #ffc20e;
+  color: #ffc20e;
+}
+
+.pill-check-indicator {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.radio-pill-btn.selected .pill-check-indicator {
+  color: #ffc20e;
+}
+
+.presence-toggle-group {
+  display: flex;
+  gap: 10px;
+}
+
+.presence-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #334155;
+  background-color: #1e293b;
+  color: #94a3b8;
+  transition: all 0.15s ease;
+}
+
+.presence-btn.yes-btn.active {
+  background-color: rgba(34, 197, 94, 0.15);
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.presence-btn.no-btn.active {
+  background-color: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.presence-warning {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #f87171;
+}
+
+/* ======================================================== */
+/* 2. GIS METADATA CARD                                     */
+/* ======================================================== */
+.gis-metadata-card {
+  background-color: #0b1329;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.gis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.gis-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.gis-label {
   font-size: 11px;
   font-weight: 600;
   color: #64748b;
@@ -195,26 +357,10 @@
   margin-bottom: 4px;
 }
 
-.metadata-val {
-  font-size: 14px;
+.gis-val {
+  font-size: 13.5px;
   font-weight: 600;
   color: #f8fafc;
-}
-
-.metadata-input {
-  width: 100%;
-  padding: 8px 10px;
-  background-color: #0b0f19;
-  border: 1px solid #334155;
-  border-radius: 6px;
-  color: #ffffff;
-  font-size: 13px;
-  box-sizing: border-box;
-}
-
-.metadata-input:focus {
-  outline: none;
-  border-color: #ffc20e;
 }
 
 /* ======================================================== */
