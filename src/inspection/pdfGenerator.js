@@ -60,6 +60,30 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
     }
   }
 
+  // Helper to wrap text into multiple lines given a maximum point width
+  function wrapText(text, font, size, maxWidth) {
+    if (!text) return [];
+    const words = String(text).split(/\s+/);
+    const lines = [];
+    let currentLine = words[0] || "";
+
+    for (let i = 1; i < words.length; i++) {
+      const word = words[i];
+      const testLine = currentLine + " " + word;
+      const testWidth = font.widthOfTextAtSize(testLine, size);
+      if (testWidth <= maxWidth) {
+        currentLine = testLine;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+    return lines;
+  }
+
   // ==========================================
   // DOCUMENT HEADER (Executive Navy Banner)
   // ==========================================
@@ -101,7 +125,7 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
   });
   y -= 12;
 
-  const headerBoxHeight = 122;
+  const headerBoxHeight = 152;
   page.drawRectangle({
     x: margin,
     y: y - headerBoxHeight,
@@ -112,66 +136,106 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
     borderWidth: 1,
   });
 
-  const c1 = margin + 10;
-  const c2 = margin + 185;
-  const c3 = margin + 360;
+  // Vertical divider between Col 1 and Col 2 for rows 1-7
+  const midX = margin + Math.floor(contentWidth / 2); // 40 + 266 = 306
+  page.drawLine({
+    start: { x: midX, y: y - 8 },
+    end: { x: midX, y: y - 128 },
+    thickness: 0.5,
+    color: colorBorder,
+  });
 
-  // Row 1: Date of Inspection | Project/BMP Name | Plan/BMP #
-  page.drawText("Date of Inspection:", { x: c1, y: y - 16, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`${formData.date || "N/A"}`, { x: c1 + 80, y: y - 16, size: 8.5, font: fontBold, color: colorDark });
+  // Horizontal divider above full-width Address row (Row 8)
+  page.drawLine({
+    start: { x: margin + 8, y: y - 132 },
+    end: { x: margin + contentWidth - 8, y: y - 132 },
+    thickness: 0.5,
+    color: colorBorder,
+  });
 
-  page.drawText("Project / BMP Name:", { x: c2, y: y - 16, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`${(formData.projectName || "N/A").slice(0, 24)}`, { x: c2 + 85, y: y - 16, size: 8.5, font: fontRegular, color: colorDark });
+  // Coordinates
+  const col1LabelX = margin + 12; // 52
+  const col1ValX = margin + 112;  // 152
+  const col2LabelX = midX + 12;   // 318
+  const col2ValX = midX + 115;    // 421
 
-  page.drawText("Plan / BMP #:", { x: c3, y: y - 16, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`${formData.planBmpNumber || bmpData.BMP_ID || "N/A"}`, { x: c3 + 60, y: y - 16, size: 8.5, font: fontBold, color: colorDark });
+  const rowH = 17.5;
+  const startY = y - 16;
 
-  // Row 2: Type of Inspection | Is BMP Still Present?
-  page.drawText("Type of Inspection:", { x: c1, y: y - 34, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`[X] ${(formData.inspectionType || "1st Inspection for Permit Cycle").slice(0, 40)}`, { x: c1 + 80, y: y - 34, size: 8, font: fontRegular, color: colorDark });
+  // Clean project name (strip any redundant "(UMBC...)" ID at the end)
+  let cleanProjectName = (formData.projectName || bmpData.Facility_T || "N/A").trim();
+  cleanProjectName = cleanProjectName.replace(/\s*\([^)]*\)$/, "");
+  if (cleanProjectName.length > 26) {
+    cleanProjectName = cleanProjectName.substring(0, 24) + "...";
+  }
 
-  page.drawText("Is BMP Present?", { x: c3, y: y - 34, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`[${formData.isBmpPresent === "YES" ? "X" : " "}] YES    [${formData.isBmpPresent === "NO" ? "X" : " "}] NO`, {
-    x: c3 + 70,
-    y: y - 34,
+  // Row 1: Date of Inspection | Plan / BMP #
+  page.drawText("Date of Inspection:", { x: col1LabelX, y: startY, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${formData.date || "N/A"}`, { x: col1ValX, y: startY, size: 8.5, font: fontBold, color: colorDark });
+
+  page.drawText("Plan / BMP #:", { x: col2LabelX, y: startY, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${formData.planBmpNumber || bmpData.BMP_ID || "N/A"}`, { x: col2ValX, y: startY, size: 8.5, font: fontBold, color: colorDark });
+
+  // Row 2: Project / Facility Name | Facility Type (GIS)
+  page.drawText("Project / Facility:", { x: col1LabelX, y: startY - rowH, size: 8, font: fontBold, color: colorGray });
+  page.drawText(cleanProjectName, { x: col1ValX, y: startY - rowH, size: 8.5, font: fontRegular, color: colorDark });
+
+  page.drawText("Facility Type (GIS):", { x: col2LabelX, y: startY - rowH, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${bmpData.Facility_T || "N/A"}`, { x: col2ValX, y: startY - rowH, size: 8.5, font: fontRegular, color: colorDark });
+
+  // Row 3: Type of Inspection | Is BMP Present?
+  const inspType = (formData.inspectionType || "1st Inspection for Permit Cycle").replace("Verification ", "");
+  page.drawText("Inspection Type:", { x: col1LabelX, y: startY - rowH * 2, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`[X] ${inspType}`, { x: col1ValX, y: startY - rowH * 2, size: 8, font: fontRegular, color: colorDark });
+
+  page.drawText("Is BMP Present?", { x: col2LabelX, y: startY - rowH * 2, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`[${formData.isBmpPresent === "YES" ? "X" : " "}] YES     [${formData.isBmpPresent === "NO" ? "X" : " "}] NO`, {
+    x: col2ValX,
+    y: startY - rowH * 2,
     size: 8.5,
     font: fontBold,
     color: colorDark,
   });
 
-  // Row 3: BMP Practice Classification | Facility Type
-  page.drawText("BMP Type (CBLP):", { x: c1, y: y - 52, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`[X] ${formData.bmpTypeClassification || "New LID Practice"}`, { x: c1 + 80, y: y - 52, size: 8.5, font: fontRegular, color: colorDark });
+  // Row 4: BMP Type (CBLP) | Placed in Service
+  page.drawText("BMP Type (CBLP):", { x: col1LabelX, y: startY - rowH * 3, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`[X] ${formData.bmpTypeClassification || "New LID Practice"}`, { x: col1ValX, y: startY - rowH * 3, size: 8.5, font: fontRegular, color: colorDark });
 
-  page.drawText("Facility Type (GIS):", { x: c3, y: y - 52, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`${bmpData.Facility_T || "N/A"}`, { x: c3 + 85, y: y - 52, size: 8.5, font: fontRegular, color: colorDark });
+  page.drawText("Placed in Service:", { x: col2LabelX, y: startY - rowH * 3, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${formData.placedInServiceDate || "N/A"}`, { x: col2ValX, y: startY - rowH * 3, size: 8.5, font: fontRegular, color: colorDark });
 
-  // Row 4: Placed in Service | Site Address
-  page.drawText("Placed in Service:", { x: c1, y: y - 70, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`${formData.placedInServiceDate || "N/A"}`, { x: c1 + 80, y: y - 70, size: 8.5, font: fontRegular, color: colorDark });
+  // Row 5: MDE Permit # | Drainage Area & ESD
+  page.drawText("MDE Permit #:", { x: col1LabelX, y: startY - rowH * 4, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${bmpData.MDE_SF_Number || bmpData.MDE_SF_Num || "N/A"}`, { x: col1ValX, y: startY - rowH * 4, size: 8.5, font: fontRegular, color: colorDark });
 
-  page.drawText("Site Address:", { x: c2, y: y - 70, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`${(formData.siteAddress || "UMBC Campus, 1000 Hilltop Circle").slice(0, 45)}`, { x: c2 + 60, y: y - 70, size: 8.5, font: fontRegular, color: colorDark });
+  const daEsd = `${bmpData.Drainage_A ? bmpData.Drainage_A.toLocaleString() + " sq ft" : "N/A"} | ${bmpData.ESDv__CF_ ? bmpData.ESDv__CF_ + " CF" : "N/A"}`;
+  page.drawText("Drainage / ESDv:", { x: col2LabelX, y: startY - rowH * 4, size: 8, font: fontBold, color: colorGray });
+  page.drawText(daEsd, { x: col2ValX, y: startY - rowH * 4, size: 8.5, font: fontRegular, color: colorDark });
 
-  // Row 5: Inspector | Credential(s) | Photos
-  page.drawText("Inspector:", { x: c1, y: y - 88, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`${formData.inspectorName || "Inspector"}`, { x: c1 + 80, y: y - 88, size: 8.5, font: fontRegular, color: colorDark });
+  // Row 6: Verification Inspector | Inspector Credential(s)
+  page.drawText("Inspector:", { x: col1LabelX, y: startY - rowH * 5, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${formData.inspectorName || "Inspector"}`, { x: col1ValX, y: startY - rowH * 5, size: 8.5, font: fontRegular, color: colorDark });
 
-  page.drawText("Credential(s):", { x: c2, y: y - 88, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`${formData.inspectorCredentials || "CBLP Professional"}`, { x: c2 + 65, y: y - 88, size: 8.5, font: fontRegular, color: colorDark });
+  page.drawText("Credential(s):", { x: col2LabelX, y: startY - rowH * 5, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${formData.inspectorCredentials || "CBLP Professional"}`, { x: col2ValX, y: startY - rowH * 5, size: 8.5, font: fontRegular, color: colorDark });
 
-  page.drawText("Attached Photos:", { x: c3, y: y - 88, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`${photos && photos.length > 0 ? `${photos.length} Attached (See Log)` : "None"}`, { x: c3 + 70, y: y - 88, size: 8.5, font: fontRegular, color: colorDark });
+  // Row 7: Assigned Checklist | Attached Photos
+  page.drawText("Assigned Checklist:", { x: col1LabelX, y: startY - rowH * 6, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${category.title} (${category.pdfPages})`, { x: col1ValX, y: startY - rowH * 6, size: 8.5, font: fontBold, color: colorDark });
 
-  // Row 6: MDE SF # | Drainage Area & ESD | Assigned Checklist
-  page.drawText("MDE Permit #:", { x: c1, y: y - 106, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`${bmpData.MDE_SF_Number || bmpData.MDE_SF_Num || "N/A"}`, { x: c1 + 80, y: y - 106, size: 8.5, font: fontRegular, color: colorDark });
+  const photoStr = photos && photos.length > 0 ? `${photos.length} Attached (See Photographic Log)` : "None attached";
+  page.drawText("Attached Photos:", { x: col2LabelX, y: startY - rowH * 6, size: 8, font: fontBold, color: colorGray });
+  page.drawText(photoStr, { x: col2ValX, y: startY - rowH * 6, size: 8.5, font: fontRegular, color: colorDark });
 
-  page.drawText("Drainage / ESD:", { x: c2, y: y - 106, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`${bmpData.Drainage_A ? bmpData.Drainage_A.toLocaleString() + " sq ft" : "N/A"} | ${bmpData.ESDv__CF_ ? bmpData.ESDv__CF_ + " CF" : "N/A"}`, { x: c2 + 75, y: y - 106, size: 8.5, font: fontRegular, color: colorDark });
-
-  page.drawText("Checklist:", { x: c3, y: y - 106, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`${category.title} (${category.pdfPages})`, { x: c3 + 50, y: y - 106, size: 8.5, font: fontBold, color: colorDark });
+  // Row 8: Site Address (Full Width at bottom)
+  page.drawText("Site Address:", { x: col1LabelX, y: y - 144, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${formData.siteAddress || "UMBC Campus, 1000 Hilltop Circle, Baltimore, MD 21250"}`, {
+    x: col1ValX,
+    y: y - 144,
+    size: 8.5,
+    font: fontRegular,
+    color: colorDark,
+  });
 
   y -= headerBoxHeight + 18;
 
@@ -201,8 +265,11 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
 
     // Check items
     for (const item of comp.checkItems) {
-      checkPageSpace(16);
       const isChecked = formData.checkedItems && formData.checkedItems[item];
+      const fontToUse = isChecked ? fontBold : fontRegular;
+      const itemLines = wrapText(item, fontToUse, 8.5, contentWidth - 36);
+      const itemSpace = 14 + (itemLines.length - 1) * 11;
+      checkPageSpace(itemSpace);
 
       // Draw checkbox box
       page.drawRectangle({
@@ -225,29 +292,34 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
         });
       }
 
-      page.drawText(item, {
-        x: margin + 26,
-        y: y - 8,
-        size: 8.5,
-        font: isChecked ? fontBold : fontRegular,
-        color: colorDark,
-      });
+      for (let i = 0; i < itemLines.length; i++) {
+        page.drawText(itemLines[i], {
+          x: margin + 26,
+          y: y - 8 - i * 11,
+          size: 8.5,
+          font: fontToUse,
+          color: colorDark,
+        });
+      }
 
-      y -= 14;
+      y -= itemSpace;
     }
 
     // Component observation notes
     const obsText = formData.observations && formData.observations[comp.name];
     if (obsText && obsText.trim()) {
-      checkPageSpace(26);
-      page.drawText(`Notes: ${obsText.trim()}`, {
-        x: margin + 26,
-        y: y - 6,
-        size: 8,
-        font: fontOblique,
-        color: colorGray,
-      });
-      y -= 14;
+      const obsLines = wrapText(`Notes: ${obsText.trim()}`, fontOblique, 8, contentWidth - 36);
+      checkPageSpace(obsLines.length * 11 + 6);
+      for (let i = 0; i < obsLines.length; i++) {
+        page.drawText(obsLines[i], {
+          x: margin + 26,
+          y: y - 6 - i * 11,
+          size: 8,
+          font: fontOblique,
+          color: colorGray,
+        });
+      }
+      y -= obsLines.length * 11 + 6;
     }
 
     // Component Plan Verification (Shaded Box matching CBLP PDF standard)
@@ -370,12 +442,17 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
   ];
 
   for (const v of verifications) {
-    checkPageSpace(26);
     const isSelected = formData.verificationStatus === v.id;
+    const fontToUse = isSelected ? fontBold : fontRegular;
+    const maxTextWidth = contentWidth - 36;
+    const lines = wrapText(v.label, fontToUse, 8.5, maxTextWidth);
+    const requiredSpace = 16 + (lines.length - 1) * 12 + 8;
+
+    checkPageSpace(requiredSpace);
 
     page.drawCircle({
-      x: margin + 15,
-      y: y - 3,
+      x: margin + 14,
+      y: y - 4,
       size: 5,
       borderColor: isSelected ? colorNavy : colorGray,
       borderWidth: 1.2,
@@ -384,65 +461,78 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
 
     if (isSelected) {
       page.drawCircle({
-        x: margin + 15,
-        y: y - 3,
+        x: margin + 14,
+        y: y - 4,
         size: 2,
         color: colorWhite,
       });
     }
 
-    page.drawText(v.label, {
-      x: margin + 28,
-      y: y - 6,
-      size: 8.5,
-      font: isSelected ? fontBold : fontRegular,
-      color: colorDark,
-    });
+    for (let i = 0; i < lines.length; i++) {
+      page.drawText(lines[i], {
+        x: margin + 28,
+        y: y - 7 - i * 12,
+        size: 8.5,
+        font: fontToUse,
+        color: colorDark,
+      });
+    }
 
-    y -= 20;
+    y -= 14 + (lines.length - 1) * 12 + 8;
   }
 
   // Maintenance action description / downgrade notes
   if (formData.actionNotes && formData.actionNotes.trim()) {
-    checkPageSpace(35);
+    const rawNotes = formData.actionNotes.trim();
+    const actionLines = wrapText(rawNotes, fontRegular, 8, contentWidth - 24);
+    const boxHeight = 22 + actionLines.length * 11 + 6;
+    checkPageSpace(boxHeight + 10);
+
     page.drawRectangle({
       x: margin,
-      y: y - 28,
+      y: y - boxHeight,
       width: contentWidth,
-      height: 28,
+      height: boxHeight,
       color: rgb(0.95, 0.97, 0.99),
       borderColor: colorBorder,
       borderWidth: 1,
     });
 
-    page.drawText(`Action / Maintenance Items to Complete within 1 Year:`, {
-      x: margin + 8,
-      y: y - 12,
+    page.drawText("Action / Maintenance Items to Complete within 1 Year:", {
+      x: margin + 10,
+      y: y - 14,
       size: 8,
       font: fontBold,
       color: colorNavy,
     });
-    page.drawText(`${formData.actionNotes.trim()}`, {
-      x: margin + 8,
-      y: y - 23,
-      size: 8,
-      font: fontRegular,
-      color: colorDark,
-    });
-    y -= 36;
+
+    for (let i = 0; i < actionLines.length; i++) {
+      page.drawText(actionLines[i], {
+        x: margin + 10,
+        y: y - 26 - i * 11,
+        size: 8,
+        font: fontRegular,
+        color: colorDark,
+      });
+    }
+
+    y -= boxHeight + 12;
   }
 
   // General Comments
   if (formData.generalNotes && formData.generalNotes.trim()) {
-    checkPageSpace(30);
-    page.drawText(`General Inspector Comments: ${formData.generalNotes.trim()}`, {
-      x: margin,
-      y: y,
-      size: 8.5,
-      font: fontOblique,
-      color: colorDark,
-    });
-    y -= 20;
+    const commentLines = wrapText(`General Inspector Comments: ${formData.generalNotes.trim()}`, fontOblique, 8.5, contentWidth);
+    checkPageSpace(commentLines.length * 12 + 10);
+    for (let i = 0; i < commentLines.length; i++) {
+      page.drawText(commentLines[i], {
+        x: margin,
+        y: y - i * 12,
+        size: 8.5,
+        font: fontOblique,
+        color: colorDark,
+      });
+    }
+    y -= commentLines.length * 12 + 12;
   }
 
   // Sign-off line

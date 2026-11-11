@@ -44,7 +44,7 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
     }
 
     const defaultProjectName = bmpData?.Facility_T
-      ? `${bmpData.Facility_T}${bmpData.Facility_N ? " #" + bmpData.Facility_N : ""} (${bmpData.BMP_ID || "UMBC"})`
+      ? `${bmpData.Facility_T}${bmpData.Facility_N ? " #" + bmpData.Facility_N : ""}`
       : "UMBC Campus Stormwater Practice";
 
     return {
