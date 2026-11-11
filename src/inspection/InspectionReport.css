@@ -390,6 +390,11 @@
   margin-bottom: 10px;
 }
 
+.top-page-badges {
+  margin-bottom: 0;
+  flex-wrap: wrap;
+}
+
 .auto-badge {
   display: inline-flex;
   align-items: center;

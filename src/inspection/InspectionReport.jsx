@@ -1,7 +1,6 @@
 import React, { useState, useRef } from "react";
 import { CHECKLIST_CATEGORIES, determineChecklistCategory } from "./checklistData";
 import { generateInspectionPDF } from "./pdfGenerator";
-import cblpPdfUrl from "../assets/CBLP BMP Checklists_v7_Verification_022023.pdf";
 import "./InspectionReport.css";
 
 export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
@@ -127,25 +126,11 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
       })
     );
 
-    setPhotos((prev) => {
-      const updated = [...prev, ...newPhotos];
-      const photoNames = updated
-        .map((p, idx) => p.name || `Photo #${idx + 1}`)
-        .join(", ");
-      setFormData((f) => ({ ...f, photoNumbers: photoNames }));
-      return updated;
-    });
+    setPhotos((prev) => [...prev, ...newPhotos]);
   };
 
   const handleRemovePhoto = (idToRemove) => {
-    setPhotos((prev) => {
-      const updated = prev.filter((p) => p.id !== idToRemove);
-      const photoNames = updated
-        .map((p, idx) => p.name || `Photo #${idx + 1}`)
-        .join(", ");
-      setFormData((f) => ({ ...f, photoNumbers: photoNames }));
-      return updated;
-    });
+    setPhotos((prev) => prev.filter((p) => p.id !== idToRemove));
   };
 
   const handleUpdateCaption = (id, caption) => {
@@ -334,17 +319,28 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
         )}
 
         {/* ======================================================== */}
-        {/* 1. CBLP OFFICIAL VERIFICATION HEADER (FULL PDF STANDARD) */}
+        {/* 1. PRACTICE TYPE & ASSIGNED CHECKLIST (TOP OF PAGE)      */}
         {/* ======================================================== */}
-        <section className="cblp-header-card">
-          <div className="card-header-bar">
-            <div className="card-badge">
-              <span className="material-symbols-outlined">assignment</span>
-              <span>CBLP Verification Inspection Form</span>
-            </div>
-            <span className="bmp-id-tag">{bmpData.BMP_ID || "N/A"}</span>
+        <section className="auto-checklist-card">
+          <div className="auto-checklist-left">
+            <h2 className="auto-checklist-title">{activeCategory.title} Checklist</h2>
+            <p className="auto-checklist-subtitle">{activeCategory.subtitle}</p>
           </div>
 
+          <div className="auto-checklist-right">
+            <div className="mapping-info-box">
+              <span className="mapping-label">Facility Type</span>
+              <span className="mapping-facility">
+                {bmpData.Facility_T || "Standard Practice"}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* ======================================================== */}
+        {/* 2. CBLP OFFICIAL VERIFICATION DETAILS                    */}
+        {/* ======================================================== */}
+        <section className="cblp-header-card">
           <div className="cblp-form-body">
             {/* Row 1: Identification */}
             <div className="form-row three-cols">
@@ -500,8 +496,8 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
               </div>
             </div>
 
-            {/* Row 5: Inspector Credentials & Photos */}
-            <div className="form-row three-cols">
+            {/* Row 5: Inspector & Credentials */}
+            <div className="form-row two-cols">
               <div className="form-field">
                 <label htmlFor="insp-name">Verification Inspector</label>
                 <input
@@ -529,107 +525,12 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
                   className="cblp-input"
                 />
               </div>
-
-              <div className="form-field">
-                <div className="field-label-with-action">
-                  <label htmlFor="site-photos">Photo #s Taken at Site</label>
-                  <button
-                    type="button"
-                    className="quick-camera-btn"
-                    onClick={() => cameraInputRef.current?.click()}
-                    title="Take photo with camera"
-                  >
-                    <span className="material-symbols-outlined">photo_camera</span>
-                    <span>Camera</span>
-                  </button>
-                </div>
-                <input
-                  id="site-photos"
-                  type="text"
-                  value={formData.photoNumbers}
-                  onChange={(e) =>
-                    setFormData({ ...formData, photoNumbers: e.target.value })
-                  }
-                  placeholder={
-                    photos.length > 0
-                      ? `${photos.length} photo(s) attached`
-                      : "e.g. IMG_0142, IMG_0143 (auto-updated with attached photos)"
-                  }
-                  className="cblp-input"
-                />
-              </div>
             </div>
           </div>
         </section>
 
         {/* ======================================================== */}
-        {/* 2. AUTOPOPULATED GIS & ENGINEERING DATA                  */}
-        {/* ======================================================== */}
-        <section className="gis-metadata-card">
-          <div className="card-header-bar">
-            <div className="card-badge neutral-badge">
-              <span className="material-symbols-outlined">database</span>
-              <span>Autopopulated Stormwater GIS Layer Data</span>
-            </div>
-          </div>
-
-          <div className="gis-grid">
-            <div className="gis-item">
-              <span className="gis-label">Facility Type</span>
-              <span className="gis-val">{bmpData.Facility_T || "N/A"}</span>
-            </div>
-
-            <div className="gis-item">
-              <span className="gis-label">Facility Name / No.</span>
-              <span className="gis-val">{bmpData.Facility_N || "N/A"}</span>
-            </div>
-
-            <div className="gis-item">
-              <span className="gis-label">MDE State Permit SF #</span>
-              <span className="gis-val">
-                {bmpData.MDE_SF_Number || bmpData.MDE_SF_Num || "N/A"}
-              </span>
-            </div>
-
-            <div className="gis-item">
-              <span className="gis-label">UMBC Project Ref (PRF)</span>
-              <span className="gis-val">{bmpData.UMBC_PRF || "N/A"}</span>
-            </div>
-
-            <div className="gis-item">
-              <span className="gis-label">Contributing Drainage Area</span>
-              <span className="gis-val">
-                {bmpData.Drainage_A
-                  ? `${bmpData.Drainage_A.toLocaleString()} sq ft`
-                  : "N/A"}
-              </span>
-            </div>
-
-            <div className="gis-item">
-              <span className="gis-label">ESD Volume (CF)</span>
-              <span className="gis-val">
-                {bmpData.ESDv__CF_ ? `${bmpData.ESDv__CF_.toLocaleString()} CF` : "N/A"}
-              </span>
-            </div>
-
-            <div className="gis-item">
-              <span className="gis-label">Impervious Area Treated</span>
-              <span className="gis-val">
-                {bmpData.IAT__SF_ ? `${bmpData.IAT__SF_.toLocaleString()} sq ft` : "N/A"}
-              </span>
-            </div>
-
-            <div className="gis-item">
-              <span className="gis-label">Assigned CBLP Template</span>
-              <span className="gis-val highlight-val">
-                {activeCategory.title} ({activeCategory.pdfPages})
-              </span>
-            </div>
-          </div>
-        </section>
-
-        {/* ======================================================== */}
-        {/* 2.5 SITE INSPECTION PHOTOS & CAMERA UPLOAD               */}
+        {/* 2. SITE INSPECTION PHOTOS & CAMERA UPLOAD                */}
         {/* ======================================================== */}
         <section className="photo-upload-section">
           {/* Hidden inputs: One for Camera capture, one for Library/Files */}
@@ -781,48 +682,7 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
         </section>
 
         {/* ======================================================== */}
-        {/* 3. AUTOMATICALLY ASSIGNED CHECKLIST                      */}
-        {/* ======================================================== */}
-        <section className="auto-checklist-card">
-          <div className="auto-checklist-left">
-            <div className="auto-badge-row">
-              <span className="auto-badge">
-                <span className="material-symbols-outlined">auto_awesome</span>
-                <span>Auto-Selected From Facility Type</span>
-              </span>
-              <span className="pdf-badge">
-                <span className="material-symbols-outlined">picture_as_pdf</span>
-                <span>CBLP Standard: {activeCategory.pdfPages}</span>
-              </span>
-            </div>
-            <h2 className="auto-checklist-title">{activeCategory.title} Checklist</h2>
-            <p className="auto-checklist-subtitle">{activeCategory.subtitle}</p>
-          </div>
-
-          <div className="auto-checklist-right">
-            <div className="mapping-info-box">
-              <span className="mapping-label">Mapped from Facility Type</span>
-              <span className="mapping-facility">
-                {bmpData.Facility_T || "Standard Practice"}
-              </span>
-            </div>
-            {cblpPdfUrl && (
-              <a
-                href={cblpPdfUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="view-ref-btn"
-                title="View original CBLP PDF checklist in new tab"
-              >
-                <span className="material-symbols-outlined">open_in_new</span>
-                <span>View Original CBLP PDF</span>
-              </a>
-            )}
-          </div>
-        </section>
-
-        {/* ======================================================== */}
-        {/* 3. INTERACTIVE CHECKLIST ITEMS                          */}
+        {/* 4. FIELD OBSERVATIONS & VERIFICATION CHECKLIST           */}
         {/* ======================================================== */}
         <section className="checklist-components-section">
           <div className="section-title-wrap">

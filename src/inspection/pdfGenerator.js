@@ -162,8 +162,8 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
   page.drawText("Credential(s):", { x: c2, y: y - 88, size: 8, font: fontBold, color: colorGray });
   page.drawText(`${formData.inspectorCredentials || "CBLP Professional"}`, { x: c2 + 65, y: y - 88, size: 8.5, font: fontRegular, color: colorDark });
 
-  page.drawText("Photos Taken:", { x: c3, y: y - 88, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`${formData.photoNumbers || "None recorded"}`, { x: c3 + 65, y: y - 88, size: 8.5, font: fontRegular, color: colorDark });
+  page.drawText("Attached Photos:", { x: c3, y: y - 88, size: 8, font: fontBold, color: colorGray });
+  page.drawText(`${photos && photos.length > 0 ? `${photos.length} Attached (See Log)` : "None"}`, { x: c3 + 70, y: y - 88, size: 8.5, font: fontRegular, color: colorDark });
 
   // Row 6: MDE SF # | Drainage Area & ESD | Assigned Checklist
   page.drawText("MDE Permit #:", { x: c1, y: y - 106, size: 8, font: fontBold, color: colorGray });
