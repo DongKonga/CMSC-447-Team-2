@@ -8,9 +8,10 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
  * @param {Object} options.bmpData - Stormwater metadata from the ArcGIS layer
  * @param {Object} options.category - Active CBLP category definition
  * @param {Object} options.formData - User checklist selections & notes
+ * @param {Array} [options.photos] - Attached site inspection photos
  * @returns {Promise<Uint8Array>} PDF document bytes
  */
-export async function generateInspectionPDF({ bmpData, category, formData }) {
+export async function generateInspectionPDF({ bmpData, category, formData, photos = [] }) {
   const pdfDoc = await PDFDocument.create();
   const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -401,6 +402,146 @@ export async function generateInspectionPDF({ bmpData, category, formData }) {
     font: fontRegular,
     color: colorGray,
   });
+
+  // ==========================================
+  // ATTACHED SITE INSPECTION PHOTOS (APPENDIX)
+  // ==========================================
+  if (photos && photos.length > 0) {
+    let photoPage = pdfDoc.addPage([612, 792]);
+    let photoY = height - margin;
+
+    // Header banner
+    photoPage.drawRectangle({
+      x: margin,
+      y: photoY - 44,
+      width: contentWidth,
+      height: 44,
+      color: colorDark,
+      borderColor: colorGold,
+      borderWidth: 1,
+    });
+    photoPage.drawText("SITE INSPECTION PHOTOGRAPHIC LOG", {
+      x: margin + 14,
+      y: photoY - 20,
+      size: 13,
+      font: fontBold,
+      color: colorGold,
+    });
+    photoPage.drawText(
+      `Facility: ${bmpData.BMP_ID || "N/A"} (${bmpData.Facility_T || "Stormwater BMP"}) — Total Attached Photos: ${photos.length}`,
+      {
+        x: margin + 14,
+        y: photoY - 34,
+        size: 8.5,
+        font: fontRegular,
+        color: rgb(0.9, 0.95, 1.0),
+      }
+    );
+    photoY -= 60;
+
+    const colWidth = 256;
+    const colGap = 20;
+    const rowHeight = 220;
+    const imgMaxH = 150;
+
+    for (let i = 0; i < photos.length; i++) {
+      const p = photos[i];
+
+      // After every 4 photos (2 rows of 2), create a new page
+      if (i > 0 && i % 4 === 0) {
+        photoPage = pdfDoc.addPage([612, 792]);
+        photoY = height - margin;
+        photoPage.drawText(
+          `Site Inspection Photos — ${bmpData.BMP_ID || "BMP"} (Page ${Math.floor(i / 4) + 1})`,
+          {
+            x: margin,
+            y: photoY,
+            size: 9,
+            font: fontOblique,
+            color: colorGray,
+          }
+        );
+        photoY -= 25;
+      }
+
+      const colIndex = i % 2;
+      const rowIndex = Math.floor((i % 4) / 2);
+      const currentY = photoY - rowIndex * rowHeight;
+      const currentX = margin + colIndex * (colWidth + colGap);
+
+      // Card container background & border
+      photoPage.drawRectangle({
+        x: currentX,
+        y: currentY - rowHeight + 15,
+        width: colWidth,
+        height: rowHeight - 15,
+        color: colorLightGray,
+        borderColor: colorBorder,
+        borderWidth: 0.8,
+      });
+
+      try {
+        if (p.dataUrl && p.dataUrl.includes(",")) {
+          const base64Data = p.dataUrl.split(",")[1];
+          const binaryString = atob(base64Data);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let b = 0; b < binaryString.length; b++) {
+            bytes[b] = binaryString.charCodeAt(b);
+          }
+
+          let embeddedImage;
+          if (p.dataUrl.startsWith("data:image/png")) {
+            embeddedImage = await pdfDoc.embedPng(bytes);
+          } else {
+            embeddedImage = await pdfDoc.embedJpg(bytes);
+          }
+
+          const imgDims = embeddedImage.scaleToFit(colWidth - 12, imgMaxH);
+          const drawX = currentX + (colWidth - imgDims.width) / 2;
+          const drawY = currentY - 8 - imgDims.height;
+
+          photoPage.drawImage(embeddedImage, {
+            x: drawX,
+            y: drawY,
+            width: imgDims.width,
+            height: imgDims.height,
+          });
+
+          // Photo title
+          const title = `Photo #${i + 1}: ${(p.name || "Site Image").substring(0, 34)}`;
+          photoPage.drawText(title, {
+            x: currentX + 8,
+            y: currentY - rowHeight + 36,
+            size: 8.5,
+            font: fontBold,
+            color: colorDark,
+          });
+
+          // Caption
+          const captionText =
+            p.caption && p.caption.trim() ? p.caption.trim() : "No caption provided";
+          const displayCaption =
+            captionText.length > 55 ? captionText.substring(0, 52) + "..." : captionText;
+          photoPage.drawText(`Caption: ${displayCaption}`, {
+            x: currentX + 8,
+            y: currentY - rowHeight + 24,
+            size: 7.5,
+            font: fontOblique,
+            color: colorGray,
+          });
+        }
+      } catch (imgErr) {
+        console.warn("Could not embed image into PDF:", imgErr);
+        photoPage.drawText(`[Photo #${i + 1}: ${p.name || "Image"}]`, {
+          x: currentX + 12,
+          y: currentY - imgMaxH / 2,
+          size: 8.5,
+          font: fontBold,
+          color: colorAlertRed,
+        });
+      }
+    }
+  }
 
   return await pdfDoc.save();
 }

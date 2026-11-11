@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { CHECKLIST_CATEGORIES, determineChecklistCategory } from "./checklistData";
 import { generateInspectionPDF } from "./pdfGenerator";
 import cblpPdfUrl from "../assets/CBLP BMP Checklists_v7_Verification_022023.pdf";
@@ -73,9 +73,114 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
     };
   });
 
+  // Photo Upload & Tablet/Mobile Camera State
+  const cameraInputRef = useRef(null);
+  const libraryInputRef = useRef(null);
+  const [photos, setPhotos] = useState([]);
+  const [activeLightboxImg, setActiveLightboxImg] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [dispatchStatus, setDispatchStatus] = useState(null);
   const [saveStatus, setSaveStatus] = useState(null);
+
+  // Client-side image compression & loading for tablet/mobile performance
+  const processImageFiles = async (fileList) => {
+    const files = Array.from(fileList);
+    const newPhotos = await Promise.all(
+      files.map((file) => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const maxDim = 1200;
+              let width = img.width;
+              let height = img.height;
+              if (width > maxDim || height > maxDim) {
+                if (width > height) {
+                  height = Math.round((height * maxDim) / width);
+                  width = maxDim;
+                } else {
+                  width = Math.round((width * maxDim) / height);
+                  height = maxDim;
+                }
+              }
+              const canvas = document.createElement("canvas");
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(img, 0, 0, width, height);
+              const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.82);
+              resolve({
+                id: Math.random().toString(36).substring(2, 9),
+                name: file.name,
+                size: (file.size / 1024).toFixed(1) + " KB",
+                dataUrl: compressedDataUrl,
+                caption: "",
+              });
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      })
+    );
+
+    setPhotos((prev) => {
+      const updated = [...prev, ...newPhotos];
+      const photoNames = updated
+        .map((p, idx) => p.name || `Photo #${idx + 1}`)
+        .join(", ");
+      setFormData((f) => ({ ...f, photoNumbers: photoNames }));
+      return updated;
+    });
+  };
+
+  const handleRemovePhoto = (idToRemove) => {
+    setPhotos((prev) => {
+      const updated = prev.filter((p) => p.id !== idToRemove);
+      const photoNames = updated
+        .map((p, idx) => p.name || `Photo #${idx + 1}`)
+        .join(", ");
+      setFormData((f) => ({ ...f, photoNumbers: photoNames }));
+      return updated;
+    });
+  };
+
+  const handleUpdateCaption = (id, caption) => {
+    setPhotos((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, caption } : p))
+    );
+  };
+
+  const handleFileInputChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      processImageFiles(e.target.files);
+      e.target.value = "";
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processImageFiles(e.dataTransfer.files);
+    }
+  };
 
   // Toggle checklist checkbox
   const handleToggleItem = (itemText) => {
@@ -107,6 +212,7 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
         bmpData,
         category: activeCategory,
         formData,
+        photos,
       });
 
       const blob = new Blob([pdfBytes], { type: "application/pdf" });
@@ -139,6 +245,7 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
       date: formData.date,
       inspector: formData.inspectorName,
       verificationStatus: formData.verificationStatus,
+      photos: photos.map((p) => ({ name: p.name, caption: p.caption })),
       checkedItems: formData.checkedItems,
       observations: formData.observations,
       actionNotes: formData.actionNotes,
@@ -424,7 +531,18 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
               </div>
 
               <div className="form-field">
-                <label htmlFor="site-photos">Photo #s Taken at Site</label>
+                <div className="field-label-with-action">
+                  <label htmlFor="site-photos">Photo #s Taken at Site</label>
+                  <button
+                    type="button"
+                    className="quick-camera-btn"
+                    onClick={() => cameraInputRef.current?.click()}
+                    title="Take photo with camera"
+                  >
+                    <span className="material-symbols-outlined">photo_camera</span>
+                    <span>Camera</span>
+                  </button>
+                </div>
                 <input
                   id="site-photos"
                   type="text"
@@ -432,7 +550,11 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
                   onChange={(e) =>
                     setFormData({ ...formData, photoNumbers: e.target.value })
                   }
-                  placeholder="e.g. IMG_0142, IMG_0143"
+                  placeholder={
+                    photos.length > 0
+                      ? `${photos.length} photo(s) attached`
+                      : "e.g. IMG_0142, IMG_0143 (auto-updated with attached photos)"
+                  }
                   className="cblp-input"
                 />
               </div>
@@ -507,7 +629,159 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
         </section>
 
         {/* ======================================================== */}
-        {/* 2. AUTOMATICALLY ASSIGNED CHECKLIST                      */}
+        {/* 2.5 SITE INSPECTION PHOTOS & CAMERA UPLOAD               */}
+        {/* ======================================================== */}
+        <section className="photo-upload-section">
+          {/* Hidden inputs: One for Camera capture, one for Library/Files */}
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style={{ display: "none" }}
+            onChange={handleFileInputChange}
+          />
+          <input
+            ref={libraryInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            style={{ display: "none" }}
+            onChange={handleFileInputChange}
+          />
+
+          <div className="photo-section-header">
+            <div className="photo-header-text">
+              <div className="photo-badge">
+                <span className="material-symbols-outlined">add_a_photo</span>
+                <span>Field Documentation Photos</span>
+              </div>
+              <h2 className="photo-section-title">Site Photos & Photographic Evidence</h2>
+              <p className="photo-section-desc">
+                Take photos in the field using your tablet or phone camera, or choose from your photo
+                library/files. Photos are automatically compressed for field performance and appended directly to the PDF inspection report.
+              </p>
+            </div>
+
+            {/* Quick Action Buttons for Mobile / Tablet */}
+            <div className="photo-action-buttons">
+              <button
+                type="button"
+                className="photo-action-btn camera-action-btn"
+                onClick={() => cameraInputRef.current?.click()}
+              >
+                <span className="material-symbols-outlined">photo_camera</span>
+                <span>Take Picture</span>
+              </button>
+              <button
+                type="button"
+                className="photo-action-btn library-action-btn"
+                onClick={() => libraryInputRef.current?.click()}
+              >
+                <span className="material-symbols-outlined">photo_library</span>
+                <span>Library / Files</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Drag & Drop Area / Click-to-upload */}
+          <div
+            className={`photo-dropzone ${isDragging ? "dragging" : ""}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => libraryInputRef.current?.click()}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                libraryInputRef.current?.click();
+              }
+            }}
+          >
+            <div className="dropzone-content">
+              <span className="material-symbols-outlined dropzone-icon">
+                {isDragging ? "file_download" : "cloud_upload"}
+              </span>
+              <div className="dropzone-texts">
+                <p className="dropzone-main">
+                  <strong>Tap to select photos</strong> or drag and drop image files here
+                </p>
+                <p className="dropzone-sub">
+                  Supports JPEG, PNG, HEIC, WebP &bull; High-res images auto-optimized &bull;{" "}
+                  {photos.length} photo{photos.length === 1 ? "" : "s"} attached
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Uploaded Photos Grid */}
+          {photos.length > 0 && (
+            <div className="attached-photos-container">
+              <div className="attached-photos-header">
+                <span className="attached-count">
+                  <span className="material-symbols-outlined">collections</span>
+                  <span>{photos.length} Attached Photo{photos.length === 1 ? "" : "s"}</span>
+                </span>
+                <span className="attached-help">
+                  Click any thumbnail to preview full size. Enter component captions for the PDF.
+                </span>
+              </div>
+
+              <div className="photos-grid">
+                {photos.map((photo, idx) => (
+                  <div key={photo.id} className="photo-card">
+                    <div
+                      className="photo-thumb-wrapper"
+                      onClick={() => setActiveLightboxImg(photo)}
+                      title="Click to view full size"
+                    >
+                      <img
+                        src={photo.dataUrl}
+                        alt={photo.caption || photo.name}
+                        className="photo-thumb-img"
+                      />
+                      <div className="photo-thumb-overlay">
+                        <span className="material-symbols-outlined">zoom_in</span>
+                      </div>
+                      <span className="photo-index-tag">#{idx + 1}</span>
+                    </div>
+
+                    <div className="photo-card-body">
+                      <div className="photo-meta-row">
+                        <span className="photo-filename" title={photo.name}>
+                          {photo.name}
+                        </span>
+                        <span className="photo-filesize">{photo.size}</span>
+                      </div>
+
+                      <div className="photo-caption-row">
+                        <input
+                          type="text"
+                          value={photo.caption}
+                          onChange={(e) => handleUpdateCaption(photo.id, e.target.value)}
+                          placeholder="Caption (e.g. Inflow weir, Vegetation)"
+                          className="photo-caption-input"
+                        />
+                        <button
+                          type="button"
+                          className="photo-delete-btn"
+                          onClick={() => handleRemovePhoto(photo.id)}
+                          title="Remove photo"
+                        >
+                          <span className="material-symbols-outlined">delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ======================================================== */}
+        {/* 3. AUTOMATICALLY ASSIGNED CHECKLIST                      */}
         {/* ======================================================== */}
         <section className="auto-checklist-card">
           <div className="auto-checklist-left">
@@ -821,6 +1095,52 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
             </button>
           </div>
         </section>
+
+        {/* ======================================================== */}
+        {/* LIGHTBOX MODAL FOR PREVIEWING ATTACHED PHOTOS            */}
+        {/* ======================================================== */}
+        {activeLightboxImg && (
+          <div
+            className="lightbox-overlay"
+            onClick={() => setActiveLightboxImg(null)}
+          >
+            <div
+              className="lightbox-dialog"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="lightbox-header">
+                <div className="lightbox-title-box">
+                  <span className="material-symbols-outlined">photo</span>
+                  <span className="lightbox-filename">{activeLightboxImg.name}</span>
+                  <span className="lightbox-filesize">({activeLightboxImg.size})</span>
+                </div>
+                <button
+                  type="button"
+                  className="lightbox-close-btn"
+                  onClick={() => setActiveLightboxImg(null)}
+                  title="Close Preview"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              <div className="lightbox-img-wrap">
+                <img
+                  src={activeLightboxImg.dataUrl}
+                  alt={activeLightboxImg.caption || activeLightboxImg.name}
+                  className="lightbox-img"
+                />
+              </div>
+
+              {activeLightboxImg.caption && (
+                <div className="lightbox-caption-box">
+                  <span className="material-symbols-outlined">subtitles</span>
+                  <span>{activeLightboxImg.caption}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
