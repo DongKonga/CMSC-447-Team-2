@@ -24,6 +24,9 @@ import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol.js"
 import { authService } from "./auth/authService"
 import { LoginPage } from "./LoginPage"
 
+// Inspection Report Component
+import { InspectionReport } from "./inspection/InspectionReport"
+
 export function App() {
   const [currentUser, setCurrentUser] = useState(() =>
     authService.getCurrentUser()
@@ -32,9 +35,36 @@ export function App() {
   const [navDescription, setNavDescription] = useState("")
   const mapRef = useRef(null)
 
+  // Route/view handling: check if opened with ?view=inspection
+  const [viewMode, setViewMode] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get("view") || "map"
+  })
+
   const handleLogout = () => {
     authService.logout()
     setCurrentUser(null)
+  }
+
+  // If not authenticated, render simplified username/password login page
+  if (!currentUser) {
+    return <LoginPage onLoginSuccess={(user) => setCurrentUser(user)} />
+  }
+
+  // If inspection view requested (e.g. redirected or new tab), render InspectionReport
+  if (viewMode === "inspection") {
+    return (
+      <InspectionReport
+        currentUser={currentUser}
+        onBackToMap={() => {
+          const url = new URL(window.location.href)
+          url.searchParams.delete("view")
+          url.searchParams.delete("bmpId")
+          window.history.pushState({}, "", url.pathname)
+          setViewMode("map")
+        }}
+      />
+    )
   }
 
   const handleViewReady = async (event) => {
@@ -58,7 +88,7 @@ export function App() {
       (layer) => layer.title === "BMP Database - Icons"
     )
 
-    // Create Popup Buttons
+    // Create Popup Button: Conduct Inspection Report
     const inspectionReportButtonContent = new CustomContent({
       creator: (event) => {
         const graphic = event.graphic || event
@@ -73,7 +103,13 @@ export function App() {
         button.style.setProperty("--calcite-font-weight-normal", "bold")
 
         button.addEventListener("click", () => {
-          alert("TODO: Redirect to inspection report template")
+          // 1. Store the selected BMP's attributes in sessionStorage for the new tab
+          sessionStorage.setItem("active_inspection_bmp", JSON.stringify(attributes))
+
+          // 2. Open inspection form in a new tab as requested
+          const bmpId = attributes.BMP_ID || attributes.Facility_N || "BMP"
+          const targetUrl = `${window.location.origin}${window.location.pathname}?view=inspection&bmpId=${encodeURIComponent(bmpId)}`
+          window.open(targetUrl, "_blank")
         })
 
         return button
@@ -82,6 +118,8 @@ export function App() {
 
     const setupLayerPopup = (layer) => {
       if (!layer) return
+
+      layer.outFields = ["*"]
 
       layer.popupTemplate = new PopupTemplate({
         title: layer.popupTemplate?.title || "{BMP ID}",
@@ -106,11 +144,6 @@ export function App() {
     }
   }
 
-  // If not authenticated, render simplified username/password login page
-  if (!currentUser) {
-    return <LoginPage onLoginSuccess={(user) => setCurrentUser(user)} />
-  }
-
   return (
     // The Shell component is used as a layout for this template
     <calcite-shell content-behind>
@@ -126,7 +159,7 @@ export function App() {
         <calcite-action
           slot="content-end"
           icon="user"
-          text={currentUser?.username ? `User: ${currentUser.username}` : "Account"}
+          text={currentUser?.displayName || currentUser?.username ? `User: ${currentUser.displayName || currentUser.username}` : "Account"}
           text-enabled
         ></calcite-action>
 
