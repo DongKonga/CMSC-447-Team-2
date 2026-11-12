@@ -6,7 +6,15 @@ body {
   margin: 0;
 }
 
-arcgis-chart {
-  width: 350px;
-  height: 250px;
+:root {
+  /* Color Customization */
+  --calcite-color-foreground-1: #0b0f19;
+  --calcite-color-foreground-2: #0f172a;
+	--calcite-color-text-1: #ffffff;
+	--calcite-color-text-2: #dae8ff;
+  --calcite-color-text-3: #dae8ff;
+
+  /* Calcite Button Customization */
+  --calcite-button-background-color: #ffc20e;
+  --calcite-button-text-color: #000000;
 }

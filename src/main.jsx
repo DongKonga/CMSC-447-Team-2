@@ -4,10 +4,13 @@ import { App } from "./App";
 import "./index.css";
 
 const container = document.getElementById("root");
+
 if (container) {
   createRoot(container).render(
     <StrictMode>
       <App />
     </StrictMode>
   );
+} else {
+  console.log("Failed to find the root element.");
 }

@@ -12,7 +12,7 @@
     "@arcgis/charts-components": "^5.1.0",
     "@arcgis/core": "^5.1.0",
     "@arcgis/map-components": "^5.1.0",
-    "@esri/calcite-components": "^5.1.1",
+    "@esri/calcite-components": "^5.2.0",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^2.4.5",
     "react": "^19.2.7",

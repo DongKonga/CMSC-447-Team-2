@@ -20,21 +20,17 @@ import PopupTemplate from "@arcgis/core/PopupTemplate.js"
 import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol.js"
 import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol.js"
 
+// Auth and Login components (Simple username/password login)
+import { authService } from "./auth/authService"
+import { LoginPage } from "./LoginPage"
+
 // Inspection Report Component
 import { InspectionReport } from "./inspection/InspectionReport"
 
 export function App() {
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const raw =
-        localStorage.getItem("cmsc447_user") ||
-        localStorage.getItem("umbc_hydro_gis_session")
-      return raw ? JSON.parse(raw) : { username: "Inspector" }
-    } catch (e) {
-      return { username: "Inspector" }
-    }
-  })
-
+  const [currentUser, setCurrentUser] = useState(() =>
+    authService.getCurrentUser()
+  )
   const [navHeading, setNavHeading] = useState("")
   const [navDescription, setNavDescription] = useState("")
   const mapRef = useRef(null)
@@ -44,6 +40,16 @@ export function App() {
     const params = new URLSearchParams(window.location.search)
     return params.get("view") || "map"
   })
+
+  const handleLogout = () => {
+    authService.logout()
+    setCurrentUser(null)
+  }
+
+  // If not authenticated, render simplified username/password login page
+  if (!currentUser) {
+    return <LoginPage onLoginSuccess={(user) => setCurrentUser(user)} />
+  }
 
   // If inspection view requested (e.g. redirected or new tab), render InspectionReport
   if (viewMode === "inspection") {
@@ -59,14 +65,6 @@ export function App() {
         }}
       />
     )
-  }
-
-  const handleLogout = () => {
-    try {
-      localStorage.removeItem("cmsc447_user")
-      localStorage.removeItem("umbc_hydro_gis_session")
-    } catch (e) {}
-    setCurrentUser(null)
   }
 
   const handleViewReady = async (event) => {
@@ -161,7 +159,7 @@ export function App() {
         <calcite-action
           slot="content-end"
           icon="user"
-          text={currentUser?.username ? `User: ${currentUser.username}` : "Account"}
+          text={currentUser?.displayName || currentUser?.username ? `User: ${currentUser.displayName || currentUser.username}` : "Account"}
           text-enabled
         ></calcite-action>
 
