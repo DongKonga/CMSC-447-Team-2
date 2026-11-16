@@ -799,8 +799,8 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
                               <span className="verif-note-label">
                                 {v.notePrompt || "If different from plan, note how it is different:"}
                               </span>
-                              <input
-                                type="text"
+                              <textarea
+                                rows={2}
                                 value={formData.verificationNotes?.[v.id] || ""}
                                 onChange={(e) => handleVerificationNoteChange(v.id, e.target.value)}
                                 placeholder="Note conformity or differences from plan..."

@@ -60,28 +60,60 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
     }
   }
 
-  // Helper to wrap text into multiple lines given a maximum point width
-  function wrapText(text, font, size, maxWidth) {
-    if (!text) return [];
-    const words = String(text).split(/\s+/);
-    const lines = [];
-    let currentLine = words[0] || "";
-
-    for (let i = 1; i < words.length; i++) {
-      const word = words[i];
-      const testLine = currentLine + " " + word;
-      const testWidth = font.widthOfTextAtSize(testLine, size);
-      if (testWidth <= maxWidth) {
-        currentLine = testLine;
+  // Helper to split a long word into chunks that each fit within maxWidth
+  function splitLongWord(word, font, size, maxWidth) {
+    const chunks = [];
+    let cur = "";
+    for (const char of word) {
+      if (font.widthOfTextAtSize(cur + char, size) <= maxWidth) {
+        cur += char;
       } else {
-        lines.push(currentLine);
-        currentLine = word;
+        if (cur) chunks.push(cur);
+        cur = char;
       }
     }
-    if (currentLine) {
-      lines.push(currentLine);
+    if (cur) chunks.push(cur);
+    return chunks;
+  }
+
+  // Robust multi-line text wrapper supporting newlines, paragraph breaks, and long unbroken words
+  function wrapText(text, font, size, maxWidth) {
+    if (!text) return [];
+    const paragraphs = String(text).split(/\r?\n/);
+    const allLines = [];
+
+    for (const para of paragraphs) {
+      const trimmedPara = para.trim();
+      if (!trimmedPara) {
+        continue;
+      }
+
+      const rawWords = trimmedPara.split(/\s+/);
+      const words = [];
+      for (const w of rawWords) {
+        if (font.widthOfTextAtSize(w, size) > maxWidth) {
+          words.push(...splitLongWord(w, font, size, maxWidth));
+        } else {
+          words.push(w);
+        }
+      }
+
+      let currentLine = "";
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i];
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        if (font.widthOfTextAtSize(testLine, size) <= maxWidth) {
+          currentLine = testLine;
+        } else {
+          if (currentLine) allLines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      if (currentLine) {
+        allLines.push(currentLine);
+      }
     }
-    return lines;
+    return allLines;
   }
 
   // ==========================================
@@ -165,8 +197,15 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
   // Clean project name (strip any redundant "(UMBC...)" ID at the end)
   let cleanProjectName = (formData.projectName || bmpData.Facility_T || "N/A").trim();
   cleanProjectName = cleanProjectName.replace(/\s*\([^)]*\)$/, "");
-  if (cleanProjectName.length > 26) {
-    cleanProjectName = cleanProjectName.substring(0, 24) + "...";
+  const projWidth = fontRegular.widthOfTextAtSize(cleanProjectName, 8.5);
+  const maxProjWidth = midX - col1ValX - 6; // ~148pt
+  let projFontSize = 8.5;
+  if (projWidth > maxProjWidth) {
+    projFontSize = Math.max(7, (maxProjWidth / projWidth) * 8.5);
+    if (fontRegular.widthOfTextAtSize(cleanProjectName, projFontSize) > maxProjWidth) {
+      const projLines = wrapText(cleanProjectName, fontRegular, projFontSize, maxProjWidth);
+      cleanProjectName = projLines[0] || cleanProjectName;
+    }
   }
 
   // Row 1: Date of Inspection | Plan / BMP #
@@ -178,7 +217,7 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
 
   // Row 2: Project / Facility Name | Facility Type (GIS)
   page.drawText("Project / Facility:", { x: col1LabelX, y: startY - rowH, size: 8, font: fontBold, color: colorGray });
-  page.drawText(cleanProjectName, { x: col1ValX, y: startY - rowH, size: 8.5, font: fontRegular, color: colorDark });
+  page.drawText(cleanProjectName, { x: col1ValX, y: startY - rowH, size: projFontSize, font: fontRegular, color: colorDark });
 
   page.drawText("Facility Type (GIS):", { x: col2LabelX, y: startY - rowH, size: 8, font: fontBold, color: colorGray });
   page.drawText(`${bmpData.Facility_T || "N/A"}`, { x: col2ValX, y: startY - rowH, size: 8.5, font: fontRegular, color: colorDark });
@@ -325,16 +364,34 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
     // Component Plan Verification (Shaded Box matching CBLP PDF standard)
     if (comp.verifications && comp.verifications.length > 0) {
       for (const v of comp.verifications) {
-        checkPageSpace(32);
         const isVerifChecked = formData.verificationChecks && formData.verificationChecks[v.id];
         const verifNote = formData.verificationNotes && formData.verificationNotes[v.id];
+        const hasUserNote = !!(verifNote && verifNote.trim());
+
+        // Wrap the verification question label cleanly
+        const labelLines = wrapText(v.label, fontBold, 7.5, contentWidth - 110);
+        const labelH = Math.max(12, labelLines.length * 9.5);
+
+        // Wrap discrepancy note lines if provided
+        let noteLines = [];
+        if (hasUserNote) {
+          noteLines = wrapText(verifNote.trim(), fontOblique, 7.5, contentWidth - 36);
+        }
+
+        // Calculate dynamic height of the shaded box so NOTHING is ever clipped
+        const noteBlockH = hasUserNote
+          ? 11 + noteLines.length * 9.5
+          : 10;
+        const boxHeight = Math.max(30, 8 + labelH + noteBlockH + 4);
+
+        checkPageSpace(boxHeight + 8);
 
         // Shaded background box (matching CBLP shaded verification column)
         page.drawRectangle({
           x: margin + 10,
-          y: y - 26,
+          y: y - boxHeight,
           width: contentWidth - 20,
-          height: 26,
+          height: boxHeight,
           color: rgb(0.93, 0.95, 0.98),
           borderColor: colorBorder,
           borderWidth: 0.8,
@@ -370,30 +427,47 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
           });
         }
 
-        // Verification label
-        const displayLabel = v.label.length > 70 ? v.label.substring(0, 68) + "..." : v.label;
-        page.drawText(displayLabel, {
-          x: margin + 98,
-          y: y - 11,
-          size: 7.5,
-          font: fontBold,
-          color: colorDark,
-        });
+        // Draw verification question label (all lines)
+        for (let l = 0; l < labelLines.length; l++) {
+          page.drawText(labelLines[l], {
+            x: margin + 98,
+            y: y - 11 - l * 9.5,
+            size: 7.5,
+            font: fontBold,
+            color: colorDark,
+          });
+        }
 
-        // Discrepancy / conformity notes line
-        const noteText = verifNote && verifNote.trim()
-          ? `${v.notePrompt} ${verifNote.trim()}`
-          : `${v.notePrompt} (Conforms to plan)`;
-        const displayNote = noteText.length > 95 ? noteText.substring(0, 92) + "..." : noteText;
-        page.drawText(displayNote, {
-          x: margin + 16,
-          y: y - 22,
-          size: 7,
-          font: fontOblique,
-          color: colorGray,
-        });
+        // Draw discrepancy notes block without truncation
+        const noteStartY = y - 8 - labelH;
+        if (hasUserNote) {
+          page.drawText(v.notePrompt || "If different from plan, note how it is different:", {
+            x: margin + 16,
+            y: noteStartY,
+            size: 7,
+            font: fontBold,
+            color: colorNavy,
+          });
+          for (let n = 0; n < noteLines.length; n++) {
+            page.drawText(noteLines[n], {
+              x: margin + 16,
+              y: noteStartY - 9.5 - n * 9.5,
+              size: 7.5,
+              font: fontOblique,
+              color: colorDark,
+            });
+          }
+        } else {
+          page.drawText(`${v.notePrompt || "If different from plan, note how it is different:"} (Conforms to plan)`, {
+            x: margin + 16,
+            y: noteStartY,
+            size: 7,
+            font: fontOblique,
+            color: colorGray,
+          });
+        }
 
-        y -= 30;
+        y -= boxHeight + 6;
       }
     }
 
@@ -521,18 +595,30 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
 
   // General Comments
   if (formData.generalNotes && formData.generalNotes.trim()) {
-    const commentLines = wrapText(`General Inspector Comments: ${formData.generalNotes.trim()}`, fontOblique, 8.5, contentWidth);
-    checkPageSpace(commentLines.length * 12 + 10);
+    checkPageSpace(28);
+
+    page.drawText("General Inspector Comments:", {
+      x: margin,
+      y: y - 10,
+      size: 8.5,
+      font: fontBold,
+      color: colorNavy,
+    });
+    y -= 14;
+
+    const commentLines = wrapText(formData.generalNotes.trim(), fontOblique, 8, contentWidth);
     for (let i = 0; i < commentLines.length; i++) {
+      checkPageSpace(13);
       page.drawText(commentLines[i], {
         x: margin,
-        y: y - i * 12,
-        size: 8.5,
+        y: y - 10,
+        size: 8,
         font: fontOblique,
         color: colorDark,
       });
+      y -= 11.5;
     }
-    y -= commentLines.length * 12 + 12;
+    y -= 8;
   }
 
   // Sign-off line
@@ -602,8 +688,8 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
 
     const colWidth = 256;
     const colGap = 20;
-    const rowHeight = 220;
-    const imgMaxH = 150;
+    const rowHeight = 235;
+    const imgMaxH = 135;
 
     for (let i = 0; i < photos.length; i++) {
       const p = photos[i];
@@ -657,7 +743,7 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
             embeddedImage = await pdfDoc.embedJpg(bytes);
           }
 
-          const imgDims = embeddedImage.scaleToFit(colWidth - 12, imgMaxH);
+          const imgDims = embeddedImage.scaleToFit(colWidth - 16, imgMaxH);
           const drawX = currentX + (colWidth - imgDims.width) / 2;
           const drawY = currentY - 8 - imgDims.height;
 
@@ -668,28 +754,36 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
             height: imgDims.height,
           });
 
-          // Photo title
-          const title = `Photo #${i + 1}: ${(p.name || "Site Image").substring(0, 34)}`;
-          photoPage.drawText(title, {
-            x: currentX + 8,
-            y: currentY - rowHeight + 36,
-            size: 8.5,
-            font: fontBold,
-            color: colorDark,
-          });
+          // Photo title (wrapped, up to 2 lines)
+          const title = `Photo #${i + 1}: ${p.name || "Site Image"}`;
+          const titleLines = wrapText(title, fontBold, 8, colWidth - 16);
+          const titleStartY = currentY - 14 - imgMaxH;
+          const displayedTitleLines = Math.min(titleLines.length, 2);
+          for (let t = 0; t < displayedTitleLines; t++) {
+            photoPage.drawText(titleLines[t], {
+              x: currentX + 8,
+              y: titleStartY - t * 9.5,
+              size: 8,
+              font: fontBold,
+              color: colorDark,
+            });
+          }
 
-          // Caption
+          // Caption (wrapped across up to 4 lines, no hard truncation)
           const captionText =
             p.caption && p.caption.trim() ? p.caption.trim() : "No caption provided";
-          const displayCaption =
-            captionText.length > 55 ? captionText.substring(0, 52) + "..." : captionText;
-          photoPage.drawText(`Caption: ${displayCaption}`, {
-            x: currentX + 8,
-            y: currentY - rowHeight + 24,
-            size: 7.5,
-            font: fontOblique,
-            color: colorGray,
-          });
+          const captionLines = wrapText(`Caption: ${captionText}`, fontOblique, 7.5, colWidth - 16);
+          const captionStartY = titleStartY - displayedTitleLines * 9.5 - 3;
+          const maxCaptionLines = Math.min(captionLines.length, 4);
+          for (let c = 0; c < maxCaptionLines; c++) {
+            photoPage.drawText(captionLines[c], {
+              x: currentX + 8,
+              y: captionStartY - c * 9.5,
+              size: 7.5,
+              font: fontOblique,
+              color: colorGray,
+            });
+          }
         }
       } catch (imgErr) {
         console.warn("Could not embed image into PDF:", imgErr);

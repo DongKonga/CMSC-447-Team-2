@@ -777,6 +777,10 @@
   font-size: 12.5px;
   outline: none;
   transition: all 0.15s ease;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 44px;
+  line-height: 1.4;
 }
 
 .verif-note-input:focus {
