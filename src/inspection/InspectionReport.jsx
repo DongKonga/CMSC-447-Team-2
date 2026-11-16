@@ -54,7 +54,7 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
       planBmpNumber: bmpData?.BMP_ID || bmpData?.MDE_SF_Number || "N/A",
       inspectionType: "Verification 1st Inspection for Permit Cycle",
       bmpTypeClassification: initialBmpType,
-      placedInServiceDate: serviceYear,
+      placedInServiceDate: "",
       siteAddress: "UMBC Campus, 1000 Hilltop Circle, Baltimore, MD 21250",
       inspectorName: currentUser?.username || "Inspector",
       inspectorCredentials: "CBLP Certified Professional",

@@ -116,6 +116,39 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
     return allLines;
   }
 
+  // Format date strings to standard MM/DD/YYYY format
+  function formatDateToMMDDYYYY(dateVal) {
+    if (!dateVal) return "N/A";
+    const str = String(dateVal).trim();
+    if (!str || str.toLowerCase() === "n/a") return "N/A";
+    // 4-digit year only (e.g. "2013") -> preserve as year
+    if (/^\d{4}$/.test(str)) return str;
+    // Year-Month (e.g. "2013-05") -> "05/2013"
+    const ymMatch = str.match(/^(\d{4})[/-](\d{1,2})$/);
+    if (ymMatch) {
+      return `${ymMatch[2].padStart(2, "0")}/${ymMatch[1]}`;
+    }
+    // YYYY-MM-DD or YYYY/MM/DD
+    const ymdMatch = str.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+    if (ymdMatch) {
+      return `${ymdMatch[2].padStart(2, "0")}/${ymdMatch[3].padStart(2, "0")}/${ymdMatch[1]}`;
+    }
+    // MM/DD/YYYY or MM-DD-YYYY
+    const mdyMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+    if (mdyMatch) {
+      return `${mdyMatch[1].padStart(2, "0")}/${mdyMatch[2].padStart(2, "0")}/${mdyMatch[3]}`;
+    }
+    // Fallback Date object parsing
+    const parsed = new Date(str);
+    if (!isNaN(parsed.getTime())) {
+      const m = String(parsed.getMonth() + 1).padStart(2, "0");
+      const d = String(parsed.getDate()).padStart(2, "0");
+      const y = parsed.getFullYear();
+      return `${m}/${d}/${y}`;
+    }
+    return str;
+  }
+
   // ==========================================
   // DOCUMENT HEADER (Executive Navy Banner)
   // ==========================================
@@ -209,8 +242,9 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
   }
 
   // Row 1: Date of Inspection | Plan / BMP #
+  const formattedInspDate = formatDateToMMDDYYYY(formData.date);
   page.drawText("Date of Inspection:", { x: col1LabelX, y: startY, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`${formData.date || "N/A"}`, { x: col1ValX, y: startY, size: 8.5, font: fontBold, color: colorDark });
+  page.drawText(formattedInspDate, { x: col1ValX, y: startY, size: 8.5, font: fontBold, color: colorDark });
 
   page.drawText("Plan / BMP #:", { x: col2LabelX, y: startY, size: 8, font: fontBold, color: colorGray });
   page.drawText(`${formData.planBmpNumber || bmpData.BMP_ID || "N/A"}`, { x: col2ValX, y: startY, size: 8.5, font: fontBold, color: colorDark });
@@ -237,11 +271,12 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
   });
 
   // Row 4: BMP Type (CBLP) | Placed in Service
+  const formattedPlacedDate = formData.placedInServiceDate ? formatDateToMMDDYYYY(formData.placedInServiceDate) : "N/A";
   page.drawText("BMP Type (CBLP):", { x: col1LabelX, y: startY - rowH * 3, size: 8, font: fontBold, color: colorGray });
   page.drawText(`[X] ${formData.bmpTypeClassification || "New LID Practice"}`, { x: col1ValX, y: startY - rowH * 3, size: 8.5, font: fontRegular, color: colorDark });
 
   page.drawText("Placed in Service:", { x: col2LabelX, y: startY - rowH * 3, size: 8, font: fontBold, color: colorGray });
-  page.drawText(`${formData.placedInServiceDate || "N/A"}`, { x: col2ValX, y: startY - rowH * 3, size: 8.5, font: fontRegular, color: colorDark });
+  page.drawText(formattedPlacedDate, { x: col2ValX, y: startY - rowH * 3, size: 8.5, font: fontRegular, color: colorDark });
 
   // Row 5: MDE Permit # | Drainage Area & ESD
   page.drawText("MDE Permit #:", { x: col1LabelX, y: startY - rowH * 4, size: 8, font: fontBold, color: colorGray });
@@ -636,6 +671,16 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
     thickness: 1,
     color: colorDark,
   });
+
+  if (formattedInspDate && formattedInspDate !== "N/A") {
+    page.drawText(formattedInspDate, {
+      x: width - margin - 145,
+      y: y + 3,
+      size: 8.5,
+      font: fontBold,
+      color: colorDark,
+    });
+  }
 
   page.drawText("Certified Inspector Signature", {
     x: margin,
