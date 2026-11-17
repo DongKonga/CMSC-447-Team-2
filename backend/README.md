@@ -23,7 +23,6 @@ Our app has three parts, like a restaurant:
 | Button on the map | What the back end does |
 |---|---|
 | Conduct Inspection Report | Saves the report. If the result is **Fail**, emails workorder@umbc.edu |
-| Create Work Order | Saves the work order and emails workorder@umbc.edu |
 
 Every report and work order stores the facility's **BMP ID** from ArcGIS, so we always know which facility it belongs to.
 
@@ -168,6 +167,7 @@ const savedReport = await response.json()
 
 ## Still to decide with the team
 
-- **Login:** the back end doesn't check who is logged in yet. The front end login is currently a placeholder too. Once login really uses ArcGIS (per the 10/23 stakeholder meeting), we can have the back end check the ArcGIS sign-in before saving reports.
+- **Login:** the back end doesn't check who is logged in yet. The front end login is currently a placeholder, so once the proprietary login system is implemented,
+the backend can check account permissions before submitting reports.
 - **Past inspection forms:** the stakeholder said old forms just need to be findable in a Box folder. This back end stores new reports. We may also want to export them to that Box folder later.
 - **Mail server:** need UMBC's SMTP details to send real emails.
