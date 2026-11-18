@@ -1014,8 +1014,10 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
               onClick={handleExportPDF}
               disabled={isExportingPdf}
             >
-              <span className="material-symbols-outlined">picture_as_pdf</span>
-              <span>{isExportingPdf ? "Exporting..." : "Download Completed PDF"}</span>
+              <span className="material-symbols-outlined">
+                {isExportingPdf ? "hourglass_empty" : "picture_as_pdf"}
+              </span>
+              <span>{isExportingPdf ? "Generating PDF..." : "Export to PDF"}</span>
             </button>
             <button
               type="button"
@@ -1023,7 +1025,7 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
               onClick={handleSaveReport}
             >
               <span className="material-symbols-outlined">save</span>
-              <span>Save & Submit Inspection</span>
+              <span>Save Report</span>
             </button>
           </div>
         </section>
