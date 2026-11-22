@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { CHECKLIST_CATEGORIES, determineChecklistCategory } from "./checklistData";
 import { generateInspectionPDF } from "./pdfGenerator";
+import { saveReportArchive } from "./reportStorage";
 import "./InspectionReport.css";
 
 export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
@@ -227,15 +228,34 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
       const blob = new Blob([pdfBytes], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
 
-      // Open PDF in new tab
-      const win = window.open(url, "_blank");
-      if (!win) {
-        // If popup blocked, create download link
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `Inspection_${bmpData.BMP_ID || "Report"}_${formData.date}.pdf`;
-        a.click();
-      }
+      // Trigger direct download
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Inspection_${bmpData.BMP_ID || "Report"}_${formData.date}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+      // Automatically archive exported report & PDF
+      const reportPayload = {
+        id: "insp-" + Date.now(),
+        bmpId: bmpData.BMP_ID || bmpData.Facility_N || "BMP",
+        facilityType: bmpData.Facility_T || "Stormwater Facility",
+        category: selectedCategoryKey,
+        categoryTitle: activeCategory.title,
+        date: formData.date,
+        inspector: formData.inspectorName,
+        verificationStatus: formData.verificationStatus,
+        photosCount: photos.length,
+        photos: photos.map((p) => ({ name: p.name, caption: p.caption })),
+        formData: { ...formData },
+        bmpData: { ...bmpData },
+        savedAt: new Date().toISOString(),
+      };
+      await saveReportArchive(reportPayload, blob);
+      setSaveStatus("PDF exported and saved to Reports Archive!");
+      setTimeout(() => setSaveStatus(null), 5000);
     } catch (err) {
       console.error("Failed to generate PDF:", err);
       alert("Error generating PDF report. Please try again.");
@@ -244,34 +264,42 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
     }
   };
 
-  // Save report locally & prepare for backend API
-  const handleSaveReport = () => {
-    const reportPayload = {
-      id: "insp-" + Date.now(),
-      bmpId: bmpData.BMP_ID,
-      facilityType: bmpData.Facility_T,
-      category: selectedCategoryKey,
-      date: formData.date,
-      inspector: formData.inspectorName,
-      verificationStatus: formData.verificationStatus,
-      photos: photos.map((p) => ({ name: p.name, caption: p.caption })),
-      checkedItems: formData.checkedItems,
-      observations: formData.observations,
-      verificationChecks: formData.verificationChecks,
-      verificationNotes: formData.verificationNotes,
-      actionNotes: formData.actionNotes,
-      generalNotes: formData.generalNotes,
-      savedAt: new Date().toISOString(),
-    };
-
+  // Save report to archive & prepare for backend API
+  const handleSaveReport = async () => {
+    setIsExportingPdf(true);
     try {
-      const existing = JSON.parse(localStorage.getItem("saved_inspection_reports") || "[]");
-      existing.unshift(reportPayload);
-      localStorage.setItem("saved_inspection_reports", JSON.stringify(existing));
-      setSaveStatus("Report successfully saved locally! Ready for database upload.");
+      const pdfBytes = await generateInspectionPDF({
+        bmpData,
+        category: activeCategory,
+        formData,
+        photos,
+      });
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+
+      const reportPayload = {
+        id: "insp-" + Date.now(),
+        bmpId: bmpData.BMP_ID || bmpData.Facility_N || "BMP",
+        facilityType: bmpData.Facility_T || "Stormwater Facility",
+        category: selectedCategoryKey,
+        categoryTitle: activeCategory.title,
+        date: formData.date,
+        inspector: formData.inspectorName,
+        verificationStatus: formData.verificationStatus,
+        photosCount: photos.length,
+        photos: photos.map((p) => ({ name: p.name, caption: p.caption })),
+        formData: { ...formData },
+        bmpData: { ...bmpData },
+        savedAt: new Date().toISOString(),
+      };
+
+      await saveReportArchive(reportPayload, blob);
+      setSaveStatus("Report and PDF saved to Reports Archive! Available under View Past Reports.");
       setTimeout(() => setSaveStatus(null), 5000);
     } catch (e) {
       console.error("Save error:", e);
+      alert("Error saving report to archive. Please try again.");
+    } finally {
+      setIsExportingPdf(false);
     }
   };
 

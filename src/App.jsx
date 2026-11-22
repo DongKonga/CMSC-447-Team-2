@@ -27,6 +27,9 @@ import { LoginPage } from "./LoginPage"
 // Inspection Report Component
 import { InspectionReport } from "./inspection/InspectionReport"
 
+// Reports Archive Component
+import { ReportsArchive } from "./archive/ReportsArchive"
+
 export function App() {
   const [currentUser, setCurrentUser] = useState(() =>
     authService.getCurrentUser()
@@ -55,6 +58,22 @@ export function App() {
   if (viewMode === "inspection") {
     return (
       <InspectionReport
+        currentUser={currentUser}
+        onBackToMap={() => {
+          const url = new URL(window.location.href)
+          url.searchParams.delete("view")
+          url.searchParams.delete("bmpId")
+          window.history.pushState({}, "", url.pathname)
+          setViewMode("map")
+        }}
+      />
+    )
+  }
+
+  // If reports archive view requested, render ReportsArchive
+  if (viewMode === "archive") {
+    return (
+      <ReportsArchive
         currentUser={currentUser}
         onBackToMap={() => {
           const url = new URL(window.location.href)
@@ -155,6 +174,19 @@ export function App() {
           heading-level="1"
           slot="logo"
         ></calcite-navigation-logo>
+
+        <calcite-action
+          slot="content-end"
+          icon="files"
+          text="View Past Reports"
+          text-enabled
+          onClick={() => {
+            const url = new URL(window.location.href)
+            url.searchParams.set("view", "archive")
+            window.history.pushState({}, "", `${url.pathname}?${url.searchParams.toString()}`)
+            setViewMode("archive")
+          }}
+        ></calcite-action>
 
         <calcite-action
           slot="content-end"
