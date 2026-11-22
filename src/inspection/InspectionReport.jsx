@@ -364,14 +364,6 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
       </header>
 
       <main className="inspection-content">
-        {/* Status Alerts */}
-        {saveStatus && (
-          <div className="status-toast success-toast" role="alert">
-            <span className="material-symbols-outlined">check_circle</span>
-            <span>{saveStatus}</span>
-          </div>
-        )}
-
         {/* ======================================================== */}
         {/* 1. PRACTICE TYPE & ASSIGNED CHECKLIST (TOP OF PAGE)      */}
         {/* ======================================================== */}
@@ -1057,6 +1049,25 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
             </button>
           </div>
         </section>
+
+        {/* Floating Toast Notification (Always Visible Anywhere on Page) */}
+        {saveStatus && (
+          <div className="floating-status-toast" role="alert">
+            <span className="material-symbols-outlined toast-check-icon">check_circle</span>
+            <div className="toast-content">
+              <span className="toast-title">Success</span>
+              <span className="toast-message">{saveStatus}</span>
+            </div>
+            <button
+              type="button"
+              className="toast-dismiss-btn"
+              onClick={() => setSaveStatus(null)}
+              title="Dismiss"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        )}
 
         {/* ======================================================== */}
         {/* LIGHTBOX MODAL FOR PREVIEWING ATTACHED PHOTOS            */}
