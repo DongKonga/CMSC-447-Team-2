@@ -32,7 +32,7 @@ from typing import Optional
 
 # FastAPI is the main framework.
 # HTTPException lets us send back errors like "404 Not Found" properly.
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response, UploadFile, File
 
 # CORS middleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,6 +47,7 @@ from app.emailer import (
 from app.schemas import (
     InspectionCreate,
     InspectionOut,
+    InspectionPdfOut,
     WorkOrderCreate,
     WorkOrderOut,
 )
@@ -62,20 +63,40 @@ app = FastAPI(
 
 
 #=====================================================================
-# Our front end runs at http://localhost:5173 (Vite's default port) and
-# our API runs at http://localhost:8000. Different addresses, so without
-# this section the browser would block every request.
+# CORS Setup: allows local development and mobile devices (iPads/tablets)
+# on the local network to communicate with the API.
 frontend_origins = os.getenv(
     "FRONTEND_ORIGINS",
     "http://localhost:5173",
-).split(",") #make into list
+).split(",")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=frontend_origins,  # which front ends are trusted
-    allow_methods=["*"],             # allow GET, POST, etc.
-    allow_headers=["*"],             # allow any request headers
+    allow_origins=["*"],  # allow any trusted client (desktop, iPad, etc.)
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+
+def ensure_tables():
+    """
+    Ensure the inspection_pdfs table exists in PostgreSQL.
+    Safe to call repeatedly; creates table if missing so no manual wipe is needed.
+    """
+    try:
+        with get_connection() as conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS inspection_pdfs (
+                    report_id   INT PRIMARY KEY REFERENCES inspection_reports(report_id) ON DELETE CASCADE,
+                    file_name   VARCHAR(255) NOT NULL,
+                    pdf_data    BYTEA        NOT NULL,
+                    uploaded_at TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS inspection_pdfs_report_idx
+                    ON inspection_pdfs (report_id);
+            """)
+    except Exception:
+        pass
 
 
 @app.get("/api/v1/health")
@@ -158,7 +179,7 @@ def create_inspection(report: InspectionCreate):
 @app.get("/api/v1/inspections", response_model=list[InspectionOut])
 def list_inspections(bmp_id: Optional[str] = None):
     """
-    List inspection reports, newest first.
+    List inspection reports, newest first. Includes has_pdf indicator.
 
     "bmp_id" is an optional "query parameter", meaning it goes after a
     question mark in the address:
@@ -169,16 +190,26 @@ def list_inspections(bmp_id: Optional[str] = None):
     inspections (SDD use case UC-3) and what the compiled reports page
     can use (UC-6).
     """
+    ensure_tables()
     with get_connection() as conn:
         if bmp_id is None:
             rows = conn.execute(
-                "SELECT * FROM inspection_reports "
-                "ORDER BY inspection_date DESC"
+                """
+                SELECT r.*, (p.report_id IS NOT NULL) AS has_pdf
+                FROM inspection_reports r
+                LEFT JOIN inspection_pdfs p ON r.report_id = p.report_id
+                ORDER BY r.inspection_date DESC
+                """
             ).fetchall()
         else:
             rows = conn.execute(
-                "SELECT * FROM inspection_reports WHERE bmp_id = %s "
-                "ORDER BY inspection_date DESC",
+                """
+                SELECT r.*, (p.report_id IS NOT NULL) AS has_pdf
+                FROM inspection_reports r
+                LEFT JOIN inspection_pdfs p ON r.report_id = p.report_id
+                WHERE r.bmp_id = %s
+                ORDER BY r.inspection_date DESC
+                """,
                 (bmp_id,),  # the comma makes this a one-item tuple
             ).fetchall()
     return rows
@@ -189,11 +220,17 @@ def list_inspections(bmp_id: Optional[str] = None):
 # Writing "report_id: int" makes FastAPI reject things like /inspections/abc.
 @app.get("/api/v1/inspections/{report_id}", response_model=InspectionOut)
 def get_inspection(report_id: int):
-    """Get one inspection report by its ID."""
+    """Get one inspection report by its ID, including has_pdf."""
+    ensure_tables()
     with get_connection() as conn:
         # fetchone() gets a single row, or None if nothing matched.
         row = conn.execute(
-            "SELECT * FROM inspection_reports WHERE report_id = %s",
+            """
+            SELECT r.*, (p.report_id IS NOT NULL) AS has_pdf
+            FROM inspection_reports r
+            LEFT JOIN inspection_pdfs p ON r.report_id = p.report_id
+            WHERE r.report_id = %s
+            """,
             (report_id,),
         ).fetchone()
 
@@ -201,6 +238,99 @@ def get_inspection(report_id: int):
     if row is None:
         raise HTTPException(status_code=404, detail="Inspection report not found")
     return row
+
+
+@app.post("/api/v1/inspections/{report_id}/pdf", response_model=InspectionPdfOut, status_code=201)
+async def upload_inspection_pdf(
+    report_id: int,
+    request: Request,
+    filename: Optional[str] = None,
+    file: Optional[UploadFile] = File(None),
+):
+    """
+    Upload and attach a generated PDF report to an inspection record.
+    Supports either:
+    1. Direct binary body: POST /api/v1/inspections/{report_id}/pdf?filename=Inspection-123.pdf with Content-Type: application/pdf
+    2. Multipart form data: POST /api/v1/inspections/{report_id}/pdf with form-field 'file'
+    """
+    ensure_tables()
+
+    # 1. Verify inspection report exists
+    with get_connection() as conn:
+        existing = conn.execute(
+            "SELECT report_id, bmp_id FROM inspection_reports WHERE report_id = %s",
+            (report_id,),
+        ).fetchone()
+
+    if existing is None:
+        raise HTTPException(status_code=404, detail="Inspection report not found")
+
+    resolved_filename = filename or f"Inspection_{existing['bmp_id']}_{report_id}.pdf"
+    pdf_bytes = b""
+
+    if file is not None:
+        pdf_bytes = await file.read()
+        if file.filename:
+            resolved_filename = file.filename
+    else:
+        pdf_bytes = await request.body()
+
+    if not pdf_bytes:
+        raise HTTPException(status_code=400, detail="Empty PDF file content provided")
+
+    # 2. Insert or update PDF binary in database (upsert)
+    upsert_query = """
+        INSERT INTO inspection_pdfs (report_id, file_name, pdf_data, uploaded_at)
+        VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
+        ON CONFLICT (report_id) DO UPDATE
+            SET file_name = EXCLUDED.file_name,
+                pdf_data = EXCLUDED.pdf_data,
+                uploaded_at = CURRENT_TIMESTAMP
+        RETURNING report_id, file_name, uploaded_at;
+    """
+
+    with get_connection() as conn:
+        conn.execute(
+            upsert_query,
+            (report_id, resolved_filename, pdf_bytes),
+        )
+
+    return {
+        "status": "uploaded",
+        "report_id": report_id,
+        "file_name": resolved_filename,
+        "size_bytes": len(pdf_bytes),
+    }
+
+
+@app.get("/api/v1/inspections/{report_id}/pdf")
+def get_inspection_pdf(report_id: int, download: bool = False):
+    """
+    Download or stream the inspection report PDF.
+    - If download=False (default): Content-Disposition is inline (renders natively in browser / iPad / iframe).
+    - If download=True: Content-Disposition is attachment (triggers immediate download dialog).
+    """
+    ensure_tables()
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT file_name, pdf_data FROM inspection_pdfs WHERE report_id = %s",
+            (report_id,),
+        ).fetchone()
+
+    if row is None:
+        raise HTTPException(status_code=404, detail="PDF for this inspection report not found")
+
+    filename = row["file_name"] or f"Inspection_{report_id}.pdf"
+    disposition_type = "attachment" if download else "inline"
+
+    return Response(
+        content=bytes(row["pdf_data"]),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'{disposition_type}; filename="{filename}"',
+            "Cache-Control": "public, max-age=3600",
+        },
+    )
 
 
 

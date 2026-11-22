@@ -171,3 +171,57 @@ def test_work_order_priority_defaults_to_normal():
 def test_missing_work_order_returns_404():
     response = client.get("/api/v1/work-orders/999999")
     assert response.status_code == 404
+
+
+# ---------- Inspection PDFs (Cross-Device Storage) ----------
+
+def test_upload_and_download_inspection_pdf():
+    # 1. Create an inspection report
+    created = client.post("/api/v1/inspections", json=VALID_INSPECTION).json()
+    report_id = created["report_id"]
+
+    # 2. Upload dummy PDF binary
+    fake_pdf = b"%PDF-1.4 test binary data for inspection"
+    upload_res = client.post(
+        f"/api/v1/inspections/{report_id}/pdf?filename=Test_Report_{report_id}.pdf",
+        content=fake_pdf,
+        headers={"Content-Type": "application/pdf"},
+    )
+    assert upload_res.status_code == 201
+    upload_data = upload_res.json()
+    assert upload_data["status"] == "uploaded"
+    assert upload_data["report_id"] == report_id
+    assert upload_data["size_bytes"] == len(fake_pdf)
+
+    # 3. Verify get_inspection reflects has_pdf = True
+    insp_res = client.get(f"/api/v1/inspections/{report_id}")
+    assert insp_res.status_code == 200
+    assert insp_res.json()["has_pdf"] is True
+
+    # 4. Download PDF (inline)
+    dl_res = client.get(f"/api/v1/inspections/{report_id}/pdf")
+    assert dl_res.status_code == 200
+    assert dl_res.content == fake_pdf
+    assert dl_res.headers["content-type"] == "application/pdf"
+    assert "inline" in dl_res.headers["content-disposition"]
+
+    # 5. Download PDF (attachment)
+    dl_att = client.get(f"/api/v1/inspections/{report_id}/pdf?download=true")
+    assert dl_att.status_code == 200
+    assert dl_att.content == fake_pdf
+    assert "attachment" in dl_att.headers["content-disposition"]
+
+
+def test_upload_pdf_nonexistent_inspection_returns_404():
+    res = client.post(
+        "/api/v1/inspections/999999/pdf",
+        content=b"%PDF-1.4 dummy",
+        headers={"Content-Type": "application/pdf"},
+    )
+    assert res.status_code == 404
+
+
+def test_get_missing_pdf_returns_404():
+    res = client.get("/api/v1/inspections/999999/pdf")
+    assert res.status_code == 404
+

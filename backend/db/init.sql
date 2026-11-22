@@ -90,3 +90,25 @@ CREATE TABLE IF NOT EXISTS work_orders (
 
 CREATE INDEX IF NOT EXISTS work_orders_bmp_idx
     ON work_orders (bmp_id);
+
+
+-- ------------------------------------------------------------
+-- TABLE 3: inspection_pdfs
+-- Binary PDF inspection documents attached to inspection reports.
+-- Stored centrally to enable cross-device viewing on iPads, tablets, and desktops.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS inspection_pdfs (
+    report_id        INT PRIMARY KEY REFERENCES inspection_reports(report_id) ON DELETE CASCADE,
+
+    -- The original downloaded filename (e.g. Inspection_BMP-101_2026-11-22.pdf).
+    file_name        VARCHAR(255) NOT NULL,
+
+    -- The full PDF binary data.
+    pdf_data         BYTEA        NOT NULL,
+
+    -- When the PDF was uploaded to the server.
+    uploaded_at      TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS inspection_pdfs_report_idx
+    ON inspection_pdfs (report_id);

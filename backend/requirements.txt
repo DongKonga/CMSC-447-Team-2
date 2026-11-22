@@ -15,3 +15,6 @@ pytest==8.3.4
 
 # httpx: needed by FastAPI's TestClient, which the tests use
 httpx==0.28.1
+
+# python-multipart: required for FastAPI file and PDF uploads
+python-multipart==0.0.20

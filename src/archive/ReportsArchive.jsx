@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { getAllReports, getReportById } from "../inspection/reportStorage";
+import { getAllReports, getReportById, getApiBase } from "../inspection/reportStorage";
 import { generateInspectionPDF, formatDateToMMDDYYYY } from "../inspection/pdfGenerator";
 import { CHECKLIST_CATEGORIES } from "../inspection/checklistData";
 import "./ReportsArchive.css";
@@ -106,13 +106,27 @@ export function ReportsArchive({ onBackToMap, currentUser }) {
 
   // Helper to resolve or generate a PDF Blob for a report
   const resolvePdfBlob = async (report) => {
-    // If the report already has a binary blob stored
+    // 1. If the report already has a binary blob stored in memory
     if (report.pdfBlob) {
       if (report.pdfBlob instanceof Blob) return report.pdfBlob;
       return new Blob([report.pdfBlob], { type: "application/pdf" });
     }
 
-    // Try retrieving full record from IndexedDB by ID
+    // 2. If the report has a backend PDF URL or backend ID, fetch directly from central storage (for iPad / cross-device access)
+    const backendId = report.backendReportId || (report.id && String(report.id).startsWith("backend-") ? report.id.replace("backend-", "") : null);
+    const pdfFetchUrl = report.pdfUrl || (backendId ? `${getApiBase()}/api/v1/inspections/${backendId}/pdf` : null);
+    if (pdfFetchUrl) {
+      try {
+        const res = await fetch(pdfFetchUrl);
+        if (res.ok) {
+          return await res.blob();
+        }
+      } catch (err) {
+        console.warn("Could not fetch PDF from central backend storage, trying fallback:", err);
+      }
+    }
+
+    // 3. Try retrieving full record from IndexedDB by ID
     if (report.id) {
       const fullRecord = await getReportById(report.id);
       if (fullRecord?.pdfBlob) {
@@ -121,7 +135,7 @@ export function ReportsArchive({ onBackToMap, currentUser }) {
       }
     }
 
-    // Otherwise, dynamically reconstruct PDF using pdfGenerator
+    // 4. Otherwise, dynamically reconstruct PDF using pdfGenerator
     const bmpData = report.bmpData || {
       BMP_ID: report.bmpId || "BMP-UNKNOWN",
       Facility_T: report.facilityType || "Stormwater Facility",
