@@ -208,20 +208,20 @@ export function ReportsArchive({ onBackToMap, currentUser }) {
     if (status === "functioning" || status === "Pass") {
       return (
         <span className="archive-status-badge status-pass">
-          <span className="status-dot"></span> Pass
+          Pass
         </span>
       );
     }
     if (status === "maintenance_needed" || status === "Needs Repair") {
       return (
         <span className="archive-status-badge status-repair">
-          <span className="status-dot"></span> Needs Repair
+          Needs Repair
         </span>
       );
     }
     return (
       <span className="archive-status-badge status-fail">
-        <span className="status-dot"></span> Fail
+        Fail
       </span>
     );
   };
@@ -464,11 +464,6 @@ export function ReportsArchive({ onBackToMap, currentUser }) {
                       </div>
                       <div className="sheet-line line-full"></div>
                       <div className="sheet-line line-wide"></div>
-                    </div>
-
-                    {/* Watermark Status Seal */}
-                    <div className="sheet-seal-badge">
-                      {renderStatusBadge(report.verificationStatus)}
                     </div>
 
                     {/* Hover Overlay */}
