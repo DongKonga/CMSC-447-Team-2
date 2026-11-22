@@ -4,6 +4,37 @@ import { generateInspectionPDF, formatDateToMMDDYYYY } from "../inspection/pdfGe
 import { CHECKLIST_CATEGORIES } from "../inspection/checklistData";
 import "./ReportsArchive.css";
 
+/**
+ * Normalizes any status identifier or text into "pass" | "repair" | "fail".
+ * Handles CBLP verification keys ("functioning", "maintenance_required", "downgrade"),
+ * API status values ("Pass", "Needs Repair", "Fail"),
+ * and fallback variants ("failed", "maintenance_needed", etc.).
+ */
+export function getReportStatusKey(status) {
+  if (!status) return "pass";
+  const s = String(status).trim().toLowerCase();
+  if (
+    s === "fail" ||
+    s === "failed" ||
+    s === "downgrade" ||
+    s.includes("fail") ||
+    s.includes("downgrade")
+  ) {
+    return "fail";
+  }
+  if (
+    s === "needs repair" ||
+    s === "maintenance_required" ||
+    s === "maintenance_needed" ||
+    s === "repair" ||
+    s.includes("repair") ||
+    s.includes("maintenance")
+  ) {
+    return "repair";
+  }
+  return "pass";
+}
+
 export function ReportsArchive({ onBackToMap, currentUser }) {
   const [reports, setReports] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,13 +69,17 @@ export function ReportsArchive({ onBackToMap, currentUser }) {
 
   // Status Counts
   const counts = useMemo(() => {
-    const res = { all: reports.length, functioning: 0, maintenance_needed: 0, failed: 0 };
+    const res = { all: reports.length, pass: 0, repair: 0, fail: 0 };
     for (const r of reports) {
-      const st = r.verificationStatus;
-      if (st === "functioning" || st === "Pass") res.functioning++;
-      else if (st === "maintenance_needed" || st === "Needs Repair") res.maintenance_needed++;
-      else if (st === "failed" || st === "Fail") res.failed++;
+      const key = getReportStatusKey(r.verificationStatus || r.status || r.rawStatus);
+      if (key === "pass") res.pass++;
+      else if (key === "repair") res.repair++;
+      else if (key === "fail") res.fail++;
     }
+    // Backward compatibility aliases
+    res.functioning = res.pass;
+    res.maintenance_needed = res.repair;
+    res.failed = res.fail;
     return res;
   }, [reports]);
 
@@ -52,7 +87,7 @@ export function ReportsArchive({ onBackToMap, currentUser }) {
   const filteredReports = useMemo(() => {
     let result = [...reports];
 
-    // 1. Search Query (BMP ID, Facility, Inspector, Notes)
+    // 1. Search Query (BMP ID, Facility, Inspector, Notes, Project, Status, Date)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter((r) => {
@@ -60,43 +95,100 @@ export function ReportsArchive({ onBackToMap, currentUser }) {
         const facility = (r.facilityType || "").toLowerCase();
         const inspector = (r.inspector || r.inspectorName || "").toLowerCase();
         const project = (r.formData?.projectName || "").toLowerCase();
-        return bmp.includes(q) || facility.includes(q) || inspector.includes(q) || project.includes(q);
+        const category = (r.categoryTitle || r.category || "").toLowerCase();
+        const notes = (
+          (r.conditionNotes || "") +
+          " " +
+          (r.repairsNeeded || "") +
+          " " +
+          (r.formData?.generalNotes || "") +
+          " " +
+          (r.formData?.actionNotes || "")
+        ).toLowerCase();
+        const statusKey = getReportStatusKey(r.verificationStatus || r.status || r.rawStatus);
+        const statusWords =
+          statusKey === "pass"
+            ? "pass functioning"
+            : statusKey === "repair"
+            ? "needs repair maintenance required"
+            : "fail failed downgrade";
+        const dateStr = (r.date || "").toLowerCase();
+        const formattedDate = formatDateToMMDDYYYY(r.date || r.savedAt).toLowerCase();
+
+        return (
+          bmp.includes(q) ||
+          facility.includes(q) ||
+          inspector.includes(q) ||
+          project.includes(q) ||
+          category.includes(q) ||
+          notes.includes(q) ||
+          statusWords.includes(q) ||
+          dateStr.includes(q) ||
+          formattedDate.includes(q)
+        );
       });
     }
 
     // 2. Status Filter
     if (statusFilter !== "all") {
       result = result.filter((r) => {
-        const st = r.verificationStatus;
-        if (statusFilter === "functioning") return st === "functioning" || st === "Pass";
-        if (statusFilter === "maintenance_needed") return st === "maintenance_needed" || st === "Needs Repair";
-        if (statusFilter === "failed") return st === "failed" || st === "Fail";
+        const key = getReportStatusKey(r.verificationStatus || r.status || r.rawStatus);
+        if (statusFilter === "pass" || statusFilter === "functioning") return key === "pass";
+        if (
+          statusFilter === "repair" ||
+          statusFilter === "maintenance_needed" ||
+          statusFilter === "maintenance_required"
+        )
+          return key === "repair";
+        if (statusFilter === "fail" || statusFilter === "failed") return key === "fail";
         return true;
       });
     }
 
-    // 3. Date Filter (exact match or partial)
+    // 3. Date Filter (exact match or partial, robust across date formats)
     if (dateFilter) {
       result = result.filter((r) => {
-        if (!r.date) return false;
-        return r.date.startsWith(dateFilter);
+        if (!r.date && !r.savedAt) return false;
+        if (r.date && r.date.startsWith(dateFilter)) return true;
+        if (r.savedAt && r.savedAt.startsWith(dateFilter)) return true;
+        try {
+          const d = new Date(r.date || r.savedAt);
+          if (!isNaN(d.getTime())) {
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, "0");
+            const dd = String(d.getDate()).padStart(2, "0");
+            if (`${yyyy}-${mm}-${dd}` === dateFilter) return true;
+          }
+        } catch (_) {}
+        return false;
       });
     }
 
     // 4. Sorting
     result.sort((a, b) => {
+      const getTime = (item) => {
+        if (item.savedAt) {
+          const t = new Date(item.savedAt).getTime();
+          if (!isNaN(t)) return t;
+        }
+        if (item.date) {
+          const t = new Date(item.date).getTime();
+          if (!isNaN(t)) return t;
+        }
+        return 0;
+      };
+
       if (sortBy === "date-desc") {
-        const dateA = new Date(a.date || a.savedAt || 0).getTime();
-        const dateB = new Date(b.date || b.savedAt || 0).getTime();
-        return dateB - dateA;
+        return getTime(b) - getTime(a);
       }
       if (sortBy === "date-asc") {
-        const dateA = new Date(a.date || a.savedAt || 0).getTime();
-        const dateB = new Date(b.date || b.savedAt || 0).getTime();
-        return dateA - dateB;
+        return getTime(a) - getTime(b);
       }
       if (sortBy === "bmp-asc") {
-        return (a.bmpId || "").localeCompare(b.bmpId || "");
+        return (a.bmpId || "").localeCompare(b.bmpId || "", undefined, {
+          numeric: true,
+          sensitivity: "base",
+        });
       }
       return 0;
     });
@@ -205,14 +297,15 @@ export function ReportsArchive({ onBackToMap, currentUser }) {
 
   // Render Status Badge
   const renderStatusBadge = (status) => {
-    if (status === "functioning" || status === "Pass") {
+    const key = getReportStatusKey(status);
+    if (key === "pass") {
       return (
         <span className="archive-status-badge status-pass">
           Pass
         </span>
       );
     }
-    if (status === "maintenance_needed" || status === "Needs Repair") {
+    if (key === "repair") {
       return (
         <span className="archive-status-badge status-repair">
           Needs Repair
@@ -335,24 +428,24 @@ export function ReportsArchive({ onBackToMap, currentUser }) {
           </button>
           <button
             type="button"
-            className={`status-tab tab-pass ${statusFilter === "functioning" ? "active" : ""}`}
-            onClick={() => setStatusFilter("functioning")}
+            className={`status-tab tab-pass ${statusFilter === "pass" || statusFilter === "functioning" ? "active" : ""}`}
+            onClick={() => setStatusFilter("pass")}
           >
-            Pass ({counts.functioning})
+            Pass ({counts.pass})
           </button>
           <button
             type="button"
-            className={`status-tab tab-repair ${statusFilter === "maintenance_needed" ? "active" : ""}`}
-            onClick={() => setStatusFilter("maintenance_needed")}
+            className={`status-tab tab-repair ${statusFilter === "repair" || statusFilter === "maintenance_needed" ? "active" : ""}`}
+            onClick={() => setStatusFilter("repair")}
           >
-            Needs Repair ({counts.maintenance_needed})
+            Needs Repair ({counts.repair})
           </button>
           <button
             type="button"
-            className={`status-tab tab-fail ${statusFilter === "failed" ? "active" : ""}`}
-            onClick={() => setStatusFilter("failed")}
+            className={`status-tab tab-fail ${statusFilter === "fail" || statusFilter === "failed" ? "active" : ""}`}
+            onClick={() => setStatusFilter("fail")}
           >
-            Fail ({counts.failed})
+            Fail ({counts.fail})
           </button>
         </div>
       </section>

@@ -182,11 +182,12 @@ export async function getAllReports() {
         matchedLocal.backendReportId = b.report_id;
         matchedLocal.hasPdf = b.has_pdf || false;
         matchedLocal.pdfUrl = b.has_pdf ? `${apiBase}/api/v1/inspections/${b.report_id}/pdf` : null;
+        matchedLocal.rawStatus = b.status;
       } else {
         // Report created from another device (e.g., iPad or desktop)
         let statusNormalized = "functioning";
-        if (b.status === "Needs Repair") statusNormalized = "maintenance_needed";
-        else if (b.status === "Fail") statusNormalized = "failed";
+        if (b.status === "Needs Repair") statusNormalized = "maintenance_required";
+        else if (b.status === "Fail") statusNormalized = "downgrade";
 
         merged.push({
           id: `backend-${b.report_id}`,
@@ -238,7 +239,13 @@ export async function getReportById(id) {
           bmpId: b.bmp_id,
           facilityType: "Stormwater Facility",
           inspector: b.inspector_name,
-          verificationStatus: b.status === "Needs Repair" ? "maintenance_needed" : b.status === "Fail" ? "failed" : "functioning",
+          verificationStatus:
+            b.status === "Needs Repair"
+              ? "maintenance_required"
+              : b.status === "Fail"
+              ? "downgrade"
+              : "functioning",
+          rawStatus: b.status,
           date: b.inspection_date ? b.inspection_date.split("T")[0] : "",
           savedAt: b.inspection_date,
           hasPdf: b.has_pdf || false,
@@ -298,10 +305,11 @@ export async function deleteReportFromArchive(id) {
 async function syncToBackendAPI(record, pdfBlob) {
   const apiBase = getApiBase();
   let backendStatus = "Pass";
-  if (record.verificationStatus === "maintenance_needed" || record.verificationStatus === "Needs Repair") {
-    backendStatus = "Needs Repair";
-  } else if (record.verificationStatus === "failed" || record.verificationStatus === "Fail") {
+  const st = String(record.verificationStatus || record.status || "").trim().toLowerCase();
+  if (st.includes("fail") || st.includes("downgrade")) {
     backendStatus = "Fail";
+  } else if (st.includes("repair") || st.includes("maintenance")) {
+    backendStatus = "Needs Repair";
   }
 
   const payload = {
