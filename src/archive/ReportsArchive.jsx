@@ -164,25 +164,47 @@ export function ReportsArchive({ onBackToMap, currentUser }) {
       });
     }
 
-    // 4. Sorting
+    // 4. Sorting (uses the inspection date on the file: formData.date or date)
     result.sort((a, b) => {
-      const getTime = (item) => {
+      const getFileDate = (item) => {
+        const dStr = item.formData?.date || item.date;
+        if (dStr) {
+          if (/^\d{4}-\d{2}-\d{2}$/.test(dStr)) {
+            const [y, m, d] = dStr.split("-").map(Number);
+            return new Date(y, m - 1, d).getTime();
+          }
+          if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dStr)) {
+            const [m, d, y] = dStr.split("/").map(Number);
+            return new Date(y, m - 1, d).getTime();
+          }
+          const parsed = new Date(dStr).getTime();
+          if (!isNaN(parsed)) return parsed;
+        }
+        // Fallback to savedAt only if no inspection date is on the file
+        if (item.savedAt) {
+          const parsed = new Date(item.savedAt).getTime();
+          if (!isNaN(parsed)) return parsed;
+        }
+        return 0;
+      };
+
+      const getSaveTime = (item) => {
         if (item.savedAt) {
           const t = new Date(item.savedAt).getTime();
-          if (!isNaN(t)) return t;
-        }
-        if (item.date) {
-          const t = new Date(item.date).getTime();
           if (!isNaN(t)) return t;
         }
         return 0;
       };
 
       if (sortBy === "date-desc") {
-        return getTime(b) - getTime(a);
+        const diff = getFileDate(b) - getFileDate(a);
+        if (diff !== 0) return diff;
+        return getSaveTime(b) - getSaveTime(a);
       }
       if (sortBy === "date-asc") {
-        return getTime(a) - getTime(b);
+        const diff = getFileDate(a) - getFileDate(b);
+        if (diff !== 0) return diff;
+        return getSaveTime(a) - getSaveTime(b);
       }
       if (sortBy === "bmp-asc") {
         return (a.bmpId || "").localeCompare(b.bmpId || "", undefined, {
@@ -525,7 +547,9 @@ export function ReportsArchive({ onBackToMap, currentUser }) {
         ) : (
           <div className="template-grid">
             {filteredReports.map((report) => {
-              const displayDate = formatDateToMMDDYYYY(report.date || report.savedAt);
+              const displayDate = formatDateToMMDDYYYY(
+                report.formData?.date || report.date || report.savedAt
+              );
               return (
                 <article
                   key={report.id}

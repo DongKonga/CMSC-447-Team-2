@@ -209,11 +209,25 @@ export async function getAllReports() {
     }
   }
 
-  // Sort newest first
+  // Sort newest first by inspection date on file (formData.date or date)
   merged.sort((a, b) => {
-    const timeA = new Date(a.savedAt || a.date).getTime() || 0;
-    const timeB = new Date(b.savedAt || b.date).getTime() || 0;
-    return timeB - timeA;
+    const parseFileDate = (item) => {
+      const d = item.formData?.date || item.date;
+      if (d) {
+        const t = new Date(d).getTime();
+        if (!isNaN(t)) return t;
+      }
+      if (item.savedAt) {
+        const t = new Date(item.savedAt).getTime();
+        if (!isNaN(t)) return t;
+      }
+      return 0;
+    };
+    const diff = parseFileDate(b) - parseFileDate(a);
+    if (diff !== 0) return diff;
+    const saveA = a.savedAt ? new Date(a.savedAt).getTime() || 0 : 0;
+    const saveB = b.savedAt ? new Date(b.savedAt).getTime() || 0 : 0;
+    return saveB - saveA;
   });
 
   return merged;
