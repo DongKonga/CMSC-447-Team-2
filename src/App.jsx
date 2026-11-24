@@ -122,11 +122,12 @@ export function App() {
         button.style.setProperty("--calcite-font-weight-normal", "bold")
 
         button.addEventListener("click", () => {
-          // 1. Store the selected BMP's attributes in sessionStorage for the new tab
-          sessionStorage.setItem("active_inspection_bmp", JSON.stringify(attributes))
-
-          // 2. Open inspection form in a new tab as requested
           const bmpId = attributes.BMP_ID || attributes.Facility_N || "BMP"
+          // Store both general active BMP and keyed BMP attributes so concurrent tabs never overwrite each other
+          sessionStorage.setItem("active_inspection_bmp", JSON.stringify(attributes))
+          sessionStorage.setItem("active_inspection_bmp_" + bmpId, JSON.stringify(attributes))
+
+          // Open inspection form in a new tab as requested
           const targetUrl = `${window.location.origin}${window.location.pathname}?view=inspection&bmpId=${encodeURIComponent(bmpId)}`
           window.open(targetUrl, "_blank")
         })

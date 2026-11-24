@@ -164,48 +164,97 @@ export async function getAllReports() {
     // Backend offline or unreachable: continue smoothly with localReports
   }
 
-  // Merge backend reports into archive list
-  const merged = [...localReports];
-  const localBackendIds = new Set(
-    localReports.map((r) => r.backendReportId).filter(Boolean)
-  );
+  // Robust collision-free merge:
+  // Map local reports that already carry a verified backendReportId
+  const localByBackendId = new Map();
+  const unlinkedLocalReports = [];
+
+  for (const lr of localReports) {
+    if (lr.backendReportId) {
+      localByBackendId.set(Number(lr.backendReportId), lr);
+    } else {
+      unlinkedLocalReports.push(lr);
+    }
+  }
+
+  const merged = [];
+  const matchedUnlinkedIds = new Set();
 
   for (const b of backendReports) {
-    if (!localBackendIds.has(b.report_id)) {
-      // Find if we have a local report for same BMP and date
-      const bDate = b.inspection_date ? b.inspection_date.split("T")[0] : "";
-      const matchedLocal = merged.find(
-        (lr) => lr.bmpId === b.bmp_id && (lr.date === bDate || (lr.savedAt && lr.savedAt.startsWith(bDate)))
-      );
+    const bId = Number(b.report_id);
+    const bDate = b.inspection_date ? b.inspection_date.split("T")[0] : "";
+    const bPdfUrl = b.has_pdf ? `${apiBase}/api/v1/inspections/${b.report_id}/pdf` : null;
 
-      if (matchedLocal) {
-        matchedLocal.backendReportId = b.report_id;
-        matchedLocal.hasPdf = b.has_pdf || false;
-        matchedLocal.pdfUrl = b.has_pdf ? `${apiBase}/api/v1/inspections/${b.report_id}/pdf` : null;
-        matchedLocal.rawStatus = b.status;
-      } else {
-        // Report created from another device (e.g., iPad or desktop)
-        let statusNormalized = "functioning";
-        if (b.status === "Needs Repair") statusNormalized = "maintenance_required";
-        else if (b.status === "Fail") statusNormalized = "downgrade";
+    // 1. Direct match: local report already has this exact backendReportId
+    if (localByBackendId.has(bId)) {
+      const matched = localByBackendId.get(bId);
+      matched.hasPdf = b.has_pdf || false;
+      matched.pdfUrl = bPdfUrl || matched.pdfUrl;
+      matched.rawStatus = b.status;
+      merged.push(matched);
+      continue;
+    }
 
-        merged.push({
-          id: `backend-${b.report_id}`,
-          backendReportId: b.report_id,
-          bmpId: b.bmp_id,
-          facilityType: "Stormwater Facility",
-          inspector: b.inspector_name,
-          verificationStatus: statusNormalized,
-          rawStatus: b.status,
-          date: bDate,
-          savedAt: b.inspection_date,
-          hasPdf: b.has_pdf || false,
-          pdfUrl: b.has_pdf ? `${apiBase}/api/v1/inspections/${b.report_id}/pdf` : null,
-          conditionNotes: b.condition_notes,
-          repairsNeeded: b.repairs_needed,
-          isRemoteReport: true,
-        });
+    // 2. Unlinked match: find an unlinked local report with same BMP ID and date.
+    // Ensure each unlinked local report is only matched once and never overwrites others.
+    let matchedUnlinked = null;
+    for (const lr of unlinkedLocalReports) {
+      if (matchedUnlinkedIds.has(lr.id)) continue;
+
+      const lrDate = lr.formData?.date || lr.date;
+      const dateMatches = lrDate === bDate || (lr.savedAt && lr.savedAt.startsWith(bDate));
+      const bmpMatches = lr.bmpId === b.bmp_id;
+
+      if (bmpMatches && dateMatches) {
+        matchedUnlinked = lr;
+        matchedUnlinkedIds.add(lr.id);
+        break;
       }
+    }
+
+    if (matchedUnlinked) {
+      matchedUnlinked.backendReportId = b.report_id;
+      matchedUnlinked.hasPdf = b.has_pdf || false;
+      matchedUnlinked.pdfUrl = bPdfUrl || matchedUnlinked.pdfUrl;
+      matchedUnlinked.rawStatus = b.status;
+      merged.push(matchedUnlinked);
+
+      // Persist the linked backendReportId to IndexedDB so it remains permanently mapped
+      try {
+        openReportsDB().then((db) => {
+          const tx = db.transaction(STORE_NAME, "readwrite");
+          tx.objectStore(STORE_NAME).put(matchedUnlinked);
+        }).catch(() => {});
+      } catch (_) {}
+    } else {
+      // 3. New / Remote report from another device (iPad, desktop, teammate)
+      let statusNormalized = "functioning";
+      if (b.status === "Needs Repair") statusNormalized = "maintenance_required";
+      else if (b.status === "Fail") statusNormalized = "downgrade";
+
+      merged.push({
+        id: `backend-${b.report_id}`,
+        backendReportId: b.report_id,
+        bmpId: b.bmp_id,
+        facilityType: "Stormwater Facility",
+        inspector: b.inspector_name,
+        verificationStatus: statusNormalized,
+        rawStatus: b.status,
+        date: bDate,
+        savedAt: b.inspection_date,
+        hasPdf: b.has_pdf || false,
+        pdfUrl: bPdfUrl,
+        conditionNotes: b.condition_notes,
+        repairsNeeded: b.repairs_needed,
+        isRemoteReport: true,
+      });
+    }
+  }
+
+  // 4. Retain any unlinked local reports that were not on the backend (e.g. offline drafts)
+  for (const lr of unlinkedLocalReports) {
+    if (!matchedUnlinkedIds.has(lr.id)) {
+      merged.push(lr);
     }
   }
 

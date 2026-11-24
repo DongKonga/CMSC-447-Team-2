@@ -5,17 +5,35 @@ import { saveReportArchive } from "./reportStorage";
 import "./InspectionReport.css";
 
 export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
+  // Stable ID for the inspection session so saving and exporting don't generate duplicate/conflicting records
+  const [reportRecordId] = useState(() => "insp-" + Date.now());
+
   // Autopopulated BMP Data
   const [bmpData, setBmpData] = useState(() => {
     if (bmpAttributes) return bmpAttributes;
+    const urlParams =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search)
+        : null;
+    const queryBmpId = urlParams?.get("bmpId");
+
     try {
+      if (queryBmpId) {
+        const keyed = sessionStorage.getItem("active_inspection_bmp_" + queryBmpId);
+        if (keyed) return JSON.parse(keyed);
+      }
       const stored = sessionStorage.getItem("active_inspection_bmp");
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (!queryBmpId || parsed.BMP_ID === queryBmpId || parsed.Facility_N === queryBmpId) {
+          return parsed;
+        }
+      }
     } catch (e) {
       console.warn("Failed to read inspection BMP from session", e);
     }
     return {
-      BMP_ID: "UMBC-DEMO-BMP-01",
+      BMP_ID: queryBmpId || "UMBC-DEMO-BMP-01",
       Facility_T: "Micro-Bioretention",
       Facility_N: "01",
       MDE_SF_Number: "11-SF-0048-01",
@@ -239,7 +257,7 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
 
       // Automatically archive exported report & PDF
       const reportPayload = {
-        id: "insp-" + Date.now(),
+        id: reportRecordId,
         bmpId: bmpData.BMP_ID || bmpData.Facility_N || "BMP",
         facilityType: bmpData.Facility_T || "Stormwater Facility",
         category: selectedCategoryKey,
@@ -277,7 +295,7 @@ export function InspectionReport({ bmpAttributes, onBackToMap, currentUser }) {
       const blob = new Blob([pdfBytes], { type: "application/pdf" });
 
       const reportPayload = {
-        id: "insp-" + Date.now(),
+        id: reportRecordId,
         bmpId: bmpData.BMP_ID || bmpData.Facility_N || "BMP",
         facilityType: bmpData.Facility_T || "Stormwater Facility",
         category: selectedCategoryKey,
