@@ -74,6 +74,14 @@ class InspectionOut(InspectionCreate):
     report_id: int
     inspection_date: datetime
     email_sent: bool
+    has_pdf: bool = False
+
+
+class InspectionPdfOut(BaseModel):
+    status: str
+    report_id: int
+    file_name: str
+    size_bytes: int
 
 
 # WORK ORDERS

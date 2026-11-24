@@ -1,6 +1,41 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 /**
+ * Format date strings to standard MM/DD/YYYY format
+ */
+export function formatDateToMMDDYYYY(dateVal) {
+  if (!dateVal) return "N/A";
+  const str = String(dateVal).trim();
+  if (!str || str.toLowerCase() === "n/a") return "N/A";
+  // 4-digit year only (e.g. "2013") -> preserve as year
+  if (/^\d{4}$/.test(str)) return str;
+  // Year-Month (e.g. "2013-05") -> "05/2013"
+  const ymMatch = str.match(/^(\d{4})[/-](\d{1,2})$/);
+  if (ymMatch) {
+    return `${ymMatch[2].padStart(2, "0")}/${ymMatch[1]}`;
+  }
+  // YYYY-MM-DD or YYYY/MM/DD
+  const ymdMatch = str.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+  if (ymdMatch) {
+    return `${ymdMatch[2].padStart(2, "0")}/${ymdMatch[3].padStart(2, "0")}/${ymdMatch[1]}`;
+  }
+  // MM/DD/YYYY or MM-DD-YYYY
+  const mdyMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (mdyMatch) {
+    return `${mdyMatch[1].padStart(2, "0")}/${mdyMatch[2].padStart(2, "0")}/${mdyMatch[3]}`;
+  }
+  // Fallback Date object parsing
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    const m = String(parsed.getMonth() + 1).padStart(2, "0");
+    const d = String(parsed.getDate()).padStart(2, "0");
+    const y = parsed.getFullYear();
+    return `${m}/${d}/${y}`;
+  }
+  return str;
+}
+
+/**
  * Generates an Inspection Report PDF based on the autopopulated BMP metadata,
  * checklist responses, and verification determination.
  *
@@ -114,39 +149,6 @@ export async function generateInspectionPDF({ bmpData, category, formData, photo
       }
     }
     return allLines;
-  }
-
-  // Format date strings to standard MM/DD/YYYY format
-  function formatDateToMMDDYYYY(dateVal) {
-    if (!dateVal) return "N/A";
-    const str = String(dateVal).trim();
-    if (!str || str.toLowerCase() === "n/a") return "N/A";
-    // 4-digit year only (e.g. "2013") -> preserve as year
-    if (/^\d{4}$/.test(str)) return str;
-    // Year-Month (e.g. "2013-05") -> "05/2013"
-    const ymMatch = str.match(/^(\d{4})[/-](\d{1,2})$/);
-    if (ymMatch) {
-      return `${ymMatch[2].padStart(2, "0")}/${ymMatch[1]}`;
-    }
-    // YYYY-MM-DD or YYYY/MM/DD
-    const ymdMatch = str.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
-    if (ymdMatch) {
-      return `${ymdMatch[2].padStart(2, "0")}/${ymdMatch[3].padStart(2, "0")}/${ymdMatch[1]}`;
-    }
-    // MM/DD/YYYY or MM-DD-YYYY
-    const mdyMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
-    if (mdyMatch) {
-      return `${mdyMatch[1].padStart(2, "0")}/${mdyMatch[2].padStart(2, "0")}/${mdyMatch[3]}`;
-    }
-    // Fallback Date object parsing
-    const parsed = new Date(str);
-    if (!isNaN(parsed.getTime())) {
-      const m = String(parsed.getMonth() + 1).padStart(2, "0");
-      const d = String(parsed.getDate()).padStart(2, "0");
-      const y = parsed.getFullYear();
-      return `${m}/${d}/${y}`;
-    }
-    return str;
   }
 
   // ==========================================
